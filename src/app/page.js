@@ -1,7 +1,9 @@
 "use client";
 import React, { useState } from "react";
+import axios from "axios";
 import Hero from "./_component/Hero";
 import Navbar from "./_component/Navbar";
+import { getMarketId } from "./_component/marketutils";
 import TopMarkets from "./_component/TopMarkets";
 import MarketMap from "./_component/MarketMap";
 import { ContainerWithChildren } from "postcss/lib/container";
@@ -10,43 +12,77 @@ import MLTable from "./_component/MLTable";
 import { Component } from "./_component/BarchartMarketPrices.";
 
 export default function Home() {
+  const [selectedCommodity, setSelectedCommodity] = useState(null);
+  const [priceDetails, setPriceDetails] = useState([]);
+  const [error, setError] = useState(null);
+
+  // Function to handle commodity selection from Navbar
+  const handleCommoditySelect = (commodity) => {
+    setSelectedCommodity(commodity);
+    console.log("Selected commodity:", commodity);
+
+    // Get market_id using the utility function
+    const marketId = getMarketId();
+    console.log("Market ID from utils:", marketId);
+
+    if (marketId) {
+      fetchPriceDetails(marketId, commodity.commodity_id);
+    } else {
+      setError("Market ID not found for the selected commodity.");
+    }
+  };
+
+  // Function to fetch price details
+  const fetchPriceDetails = async (marketId, commodityId) => {
+    try {
+      console.log("Sending request with:", { marketId, commodityId });
+
+      const response = await axios.post(
+        "http://127.0.0.1:8000/api/get-price-details/",
+        {
+          market_id: marketId,
+          commodity_id: commodityId,
+        }
+      );
+
+      console.log("Received response:", response.data);
+      setPriceDetails(response.data); // Set the whole array directly
+      setError(null);
+    } catch (err) {
+      console.error("Error:", err);
+      console.log("Response data:", err.response?.data);
+      setError("Failed to fetch price details.");
+      setPriceDetails([]);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <Navbar
-      />
-
-      {/* <main className="container mx-auto px-4 py-8">
+      <Navbar onCommoditySelect={handleCommoditySelect} />
+      
+       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
           <div className="bg-white shadow-lg rounded-lg p-6">
-            {selectedCommodityData ? (
-              <Hero
-                commodityName={selectedCommodityData.Commodity}
-                variety={selectedCommodityData.Variety}
-                lastUpdate={selectedCommodityData.Arrival_Date}
-                price={selectedCommodityData.Modal_Price}
-                unit="Quintal"
-              />
-            ) : (
-              <p className="text-center text-gray-500">
-                Select a commodity to view details
-              </p>
-            )}
+            {selectedCommodity ? (
+        <Hero
+          commodityName={selectedCommodity.commodity_name}
+          variety={selectedCommodity.commodity_variety}
+          priceDetails={priceDetails} // Pass the whole array
+        />
+      ) : (
+        <p className="text-center mt-8 text-gray-600">
+          Select a commodity to view details
+        </p>
+      )}
           </div>
           <div className="bg-white shadow-lg rounded-lg p-6">
-            {topMarkets.length > 0 ? (
-              <Component
+              {/* <Component
                 title={`Top 5 Markets for ${
                   selectedCommodityData?.Commodity || "Commodity"
                 }`}
                 markets={topMarkets}
                 priceLabel="Price"
-              />
-            ) : (
-              <p className="text-center text-gray-500">
-                No top markets data available
-              </p>
-            )}
+              /> */}
           </div>
         </div>
 
@@ -61,7 +97,7 @@ export default function Home() {
         <div className="bg-white shadow-lg rounded-lg p-6">
           <Chart />
         </div>
-      </main> */}
+      </main> 
     </div>
   );
 }

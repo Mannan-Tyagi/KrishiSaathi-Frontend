@@ -2,14 +2,16 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Search, MapPin, ChevronDown, X } from "lucide-react";
 import Logo from "../../../public/logo.png";
+import { setMarketId } from "./marketutils";
 
 const Navbar = ({ onCommoditySelect }) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [filteredCommodities, setFilteredCommodities] = useState([]); // Added filteredCommodities state
   const [selectedLocation, setSelectedLocation] = useState({
     state: "",
     district: "",
     market: "",
-    marketId: null, // Added marketId to track the selected market's ID
+    marketId: null,
   });
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [commodities, setCommodities] = useState([]);
@@ -58,7 +60,30 @@ const Navbar = ({ onCommoditySelect }) => {
 
     fetchDistricts();
   }, [selectedLocation.state]);
-
+  const handleLocationSelect = (type, value) => {
+    setSelectedLocation((prev) => {
+      const newLocation = { ...prev, [type]: value };
+  
+      if (type === "state") {
+        newLocation.district = "";
+        newLocation.market = "";
+        newLocation.marketId = null; // Reset marketId when state is changed
+      } else if (type === "district") {
+        newLocation.market = "";
+        newLocation.marketId = null; // Reset marketId when district is changed
+      } else if (type === "market") {
+        newLocation.market = value.name; // Set the selected market name
+        newLocation.marketId = value.id;
+        setMarketId(value.id); // Set the selected market id
+      }
+      
+      return newLocation;
+    });
+  
+    if (type === "market") {
+      setIsLocationOpen(false);
+    }
+  };
   // Fetch markets when a district is selected
   useEffect(() => {
     const fetchMarkets = async () => {
@@ -77,7 +102,7 @@ const Navbar = ({ onCommoditySelect }) => {
             ...prev.markets,
             [selectedLocation.district]: data.map((item) => ({
               name: item.market_name,
-              id: item.market_id, // Store the market_id
+              id: item.market_id, 
             })),
           },
         }));
@@ -96,7 +121,7 @@ const Navbar = ({ onCommoditySelect }) => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ market_id: selectedLocation.marketId }), // Use marketId for fetching commodities
+          body: JSON.stringify({ market_id: selectedLocation.marketId }), 
         });
         const data = await response.json();
         setCommodities(data);
@@ -106,42 +131,27 @@ const Navbar = ({ onCommoditySelect }) => {
     fetchCommodities();
   }, [selectedLocation.marketId]);
 
-  // Handle search submission
-  const handleSearch = (e) => {
-    e.preventDefault();
-    const selected = commodities.find((commodity) =>
-      commodity.commodity_name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    if (selected) {
-      onCommoditySelect(selected);
+  // Handle search term input and filter commodities
+  const handleSearchTermChange = (e) => {
+    const term = e.target.value.toLowerCase();
+    setSearchTerm(term);
+    
+    if (term) {
+      const filtered = commodities.filter((commodity) =>
+        commodity.commodity_name.toLowerCase().includes(term)
+      );
+      setFilteredCommodities(filtered);
+    } else {
+      setFilteredCommodities([]);
     }
   };
 
-  // Handle location selection
-  const handleLocationSelect = (type, value) => {
-    setSelectedLocation((prev) => {
-      const newLocation = { ...prev, [type]: value };
-  
-      if (type === "state") {
-        newLocation.district = "";
-        newLocation.market = "";
-        newLocation.marketId = null; // Reset marketId when state is changed
-      } else if (type === "district") {
-        newLocation.market = "";
-        newLocation.marketId = null; // Reset marketId when district is changed
-      } else if (type === "market") {
-        newLocation.market = value.name; // Set the selected market name
-        newLocation.marketId = value.id; // Set the selected market id
-      }
-  
-      return newLocation;
-    });
-  
-    if (type === "market") {
-      setIsLocationOpen(false);
-    }
+  // Handle commodity selection
+  const handleCommoditySelect = (commodity) => {
+    onCommoditySelect(commodity);
+    setSearchTerm("");
+    setFilteredCommodities([]);
   };
-  
 
   return (
     <nav className="sticky top-0 z-20 bg-white bg-opacity-40 shadow-md transition-all duration-300 ease-in-out backdrop-blur-sm">
@@ -162,43 +172,38 @@ const Navbar = ({ onCommoditySelect }) => {
 
           <div className="flex-1 flex items-center justify-center px-2 lg:ml-6 lg:justify-end">
             <div className="max-w-lg w-full lg:max-w-xs relative">
-              <form onSubmit={handleSearch} className="relative">
-                <input
-                  type="text"
-                  placeholder="Search for commodities..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onFocus={() => setIsSearchFocused(true)}
-                  onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                  className="block w-full pl-12 pr-3 py-3 border border-gray-300 rounded-md leading-5 bg-white bg-opacity-90 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-green-500 sm:text-sm transition-all duration-300 ease-in-out"
-                />
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-6 w-6 text-gray-400" />
-                </div>
-                {searchTerm && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchTerm("")}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  >
-                    <X className="h-6 w-6 text-gray-400 hover:text-gray-600" />
-                  </button>
-                )}
-              </form>
-              {isSearchFocused && commodities.length > 0 && (
+              <input
+                type="text"
+                placeholder="Search for commodities..."
+                value={searchTerm}
+                onChange={handleSearchTermChange}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                className="block w-full pl-12 pr-3 py-3 border border-gray-300 rounded-md leading-5 bg-white bg-opacity-90 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-green-500 sm:text-sm transition-all duration-300 ease-in-out"
+              />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-6 w-6 text-gray-400" />
+              </div>
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm("")}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  <X className="h-6 w-6 text-gray-400 hover:text-gray-600" />
+                </button>
+              )}
+              {isSearchFocused && filteredCommodities.length > 0 && (
                 <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
-                  {commodities.map((commodity) => (
+                  {filteredCommodities.map((commodity) => (
                     <div
                       key={commodity.id}
                       className="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-green-50 flex items-center"
-                      onClick={() => {
-                        onCommoditySelect(commodity);
-                        setSearchTerm("");
-                      }}
+                      onClick={() => handleCommoditySelect(commodity)}
                     >
                       <Image
-                        src={commodity.image}
-                        alt={commodity.name}
+                        src={`/${commodity.commodity_name}.jpg`}
+                        alt={commodity.commodity_name}
                         width={40}
                         height={40}
                         className="rounded-full mr-3"
