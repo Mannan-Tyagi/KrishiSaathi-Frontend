@@ -3,18 +3,19 @@ import React, { useState } from "react";
 import axios from "axios";
 import Hero from "./_component/Hero";
 import Navbar from "./_component/Navbar";
-import { getMarketId } from "./_component/marketutils";
+import { getMarketId, getMarketName } from "./_component/marketutils";
 import TopMarkets from "./_component/TopMarkets";
 import MarketMap from "./_component/MarketMap";
 import { ContainerWithChildren } from "postcss/lib/container";
 import { Chart } from "./_component/Chart";
 import MLTable from "./_component/MLTable";
-import { Component } from "./_component/BarchartMarketPrices.";
+import { Component, Top5Markets } from "./_component/Top5Markets";
 
 export default function Home() {
   const [selectedCommodity, setSelectedCommodity] = useState(null);
   const [priceDetails, setPriceDetails] = useState([]);
   const [error, setError] = useState(null);
+  const [marketName, setMarketName] = useState(null); // Add state to store market name
 
   // Function to handle commodity selection from Navbar
   const handleCommoditySelect = (commodity) => {
@@ -23,6 +24,8 @@ export default function Home() {
 
     // Get market_id using the utility function
     const marketId = getMarketId();
+    const marketName = getMarketName();
+    setMarketName(marketName); // Set the market name state
     console.log("Market ID from utils:", marketId);
 
     if (marketId) {
@@ -76,13 +79,19 @@ export default function Home() {
       )}
           </div>
           <div className="bg-white shadow-lg rounded-lg p-6">
-              {/* <Component
-                title={`Top 5 Markets for ${
-                  selectedCommodityData?.Commodity || "Commodity"
-                }`}
-                markets={topMarkets}
-                priceLabel="Price"
-              /> */}
+          {selectedCommodity ? (
+            <Top5Markets
+            marketName={marketName}
+            commodityName={selectedCommodity.commodity_name}
+            commodityId={selectedCommodity.commodity_id}
+            variety={selectedCommodity.commodity_variety}
+          />
+          
+            ) : (
+              <p className="text-center mt-8 text-gray-600">
+                Select a commodity to view details
+              </p>
+            )}
           </div>
         </div>
 
@@ -91,11 +100,29 @@ export default function Home() {
         </div>
 
         <div className="bg-white shadow-lg rounded-lg p-6 mb-8">
-          <MLTable />
+        {selectedCommodity ? (
+          <MLTable 
+          commodityId={selectedCommodity.commodity_id}
+          />
+          
+        ) : (
+          <p className="text-center mt-8 text-gray-600">
+            Select a commodity to view details
+          </p>
+        )}
         </div>
 
         <div className="bg-white shadow-lg rounded-lg p-6">
-          <Chart />
+        {selectedCommodity ? (
+          <Chart 
+          commodityId={selectedCommodity.commodity_id}
+
+          />
+        ) : (
+          <p className="text-center mt-8 text-gray-600">
+            Select a commodity to view details
+          </p>
+        )}
         </div>
       </main> 
     </div>

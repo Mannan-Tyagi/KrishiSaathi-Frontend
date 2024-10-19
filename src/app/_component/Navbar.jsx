@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Search, MapPin, ChevronDown, X } from "lucide-react";
 import Logo from "../../../public/logo.png";
-import { setMarketId } from "./marketutils";
+import { setMarketId, setMarketName } from "./marketutils";
 
 const Navbar = ({ onCommoditySelect }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -74,7 +74,8 @@ const Navbar = ({ onCommoditySelect }) => {
       } else if (type === "market") {
         newLocation.market = value.name; // Set the selected market name
         newLocation.marketId = value.id;
-        setMarketId(value.id); // Set the selected market id
+        setMarketId(value.id);
+        setMarketName(value.name) // Set the selected market id
       }
       
       return newLocation;
