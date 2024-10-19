@@ -1,8 +1,6 @@
-"use client";
-
+import { useEffect, useState } from "react";
 import { TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis } from "recharts";
-
 import {
   Card,
   CardContent,
@@ -20,15 +18,7 @@ import {
 
 export const description = "A bar chart with a label";
 
-const chartData = [
-  { month: "January", desktop: 186 },
-  { month: "February", desktop: 305 },
-  { month: "March", desktop: 237 },
-  { month: "April", desktop: 73 },
-  { month: "May", desktop: 209 },
-  { month: "June", desktop: 214 },
-];
-
+// Define the initial chart config
 const chartConfig = {
   desktop: {
     label: "Desktop",
@@ -36,13 +26,44 @@ const chartConfig = {
   },
 };
 
-export function Component() {
+export function Top5Markets({ marketName, commodityName, variety, commodityId }) {
+  const [chartData, setChartData] = useState([]);
+
+  useEffect(() => {
+    // Fetch data from API and map it to chartData
+    async function fetchData() {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/api/get-top6-market-prices/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ commodity_id: commodityId }),
+        });
+        const data = await response.json();
+
+        // Map API data to chartData format
+        const formattedData = data.map((item) => ({
+          marketName: item.market_name, // Use market_name for X-axis
+          modalPrice: parseFloat(item.modal_price), // Converting modal_price to a number
+        }));
+
+        setChartData(formattedData);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    }
+
+    fetchData();
+  }, [commodityId]);
+
   return (
     <div>
       <Card>
         <CardHeader>
-          <CardTitle>Bar Chart - Label</CardTitle>
-          <CardDescription>January - June 2024</CardDescription>
+          <CardTitle>
+            Top Markets with Highest prices of {commodityName} <span className="text-sm">({variety})</span>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <ChartContainer config={chartConfig}>
@@ -55,17 +76,16 @@ export function Component() {
             >
               <CartesianGrid vertical={false} />
               <XAxis
-                dataKey="month"
+                dataKey="marketName" // Use marketName for the X-axis
                 tickLine={false}
                 tickMargin={10}
                 axisLine={false}
-                tickFormatter={(value) => value.slice(0, 3)}
               />
               <ChartTooltip
                 cursor={false}
                 content={<ChartTooltipContent hideLabel />}
               />
-              <Bar dataKey="desktop" fill="#FFB6C1" radius={8}>
+              <Bar dataKey="modalPrice" fill="#FFB6C1" radius={8}>
                 <LabelList
                   position="top"
                   offset={12}
@@ -81,7 +101,7 @@ export function Component() {
             Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
           </div>
           <div className="leading-none text-muted-foreground">
-            Showing total visitors for the last 6 months
+            Showing Maximum Prices of {commodityName} in October 2024 Pan India
           </div>
         </CardFooter>
       </Card>
