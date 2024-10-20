@@ -43,7 +43,7 @@ const Hero = ({
 
             <div className="relative">
               <Image
-                src={imageSrc || "/Onion.jpg"} // Fallback image
+                src={`/${commodityName}.jpeg`}
                 alt={commodityName}
                 width={180}
                 height={180}
