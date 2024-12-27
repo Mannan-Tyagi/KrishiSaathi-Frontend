@@ -6,7 +6,6 @@ import Navbar from "./_component/Navbar";
 import { getMarketId, getMarketName } from "./_component/marketutils";
 import TopMarkets from "./_component/TopMarkets";
 import MarketMap from "./_component/MarketMap";
-import { ContainerWithChildren } from "postcss/lib/container";
 import { Chart } from "./_component/Chart";
 import MLTable from "./_component/MLTable";
 import { Component, Top5Markets } from "./_component/Top5Markets";
@@ -15,17 +14,15 @@ export default function Home() {
   const [selectedCommodity, setSelectedCommodity] = useState(null);
   const [priceDetails, setPriceDetails] = useState([]);
   const [error, setError] = useState(null);
-  const [marketName, setMarketName] = useState(null); // Add state to store market name
+  const [marketName, setMarketName] = useState(null);
 
-  // Function to handle commodity selection from Navbar
   const handleCommoditySelect = (commodity) => {
     setSelectedCommodity(commodity);
     console.log("Selected commodity:", commodity);
 
-    // Get market_id using the utility function
     const marketId = getMarketId();
     const marketName = getMarketName();
-    setMarketName(marketName); // Set the market name state
+    setMarketName(marketName);
     console.log("Market ID from utils:", marketId);
 
     if (marketId) {
@@ -35,7 +32,6 @@ export default function Home() {
     }
   };
 
-  // Function to fetch price details
   const fetchPriceDetails = async (marketId, commodityId) => {
     try {
       console.log("Sending request with:", { marketId, commodityId });
@@ -49,7 +45,7 @@ export default function Home() {
       );
 
       console.log("Received response:", response.data);
-      setPriceDetails(response.data); // Set the whole array directly
+      setPriceDetails(response.data);
       setError(null);
     } catch (err) {
       console.error("Error:", err);
@@ -60,71 +56,71 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Navbar onCommoditySelect={handleCommoditySelect} />
-      
-       <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-          <div className="bg-white shadow-lg rounded-lg p-6">
-            {selectedCommodity ? (
-        <Hero
-          commodityName={selectedCommodity.commodity_name}
-          variety={selectedCommodity.commodity_variety}
-          priceDetails={priceDetails} // Pass the whole array
-        />
-      ) : (
-        <p className="text-center mt-8 text-gray-600">
-          Select a commodity to view details
-        </p>
-      )}
-          </div>
-          <div className="bg-white shadow-lg rounded-lg p-6">
-          {selectedCommodity ? (
-            <Top5Markets
+    <div className="min-h-screen">
+  <Navbar onCommoditySelect={handleCommoditySelect} />
+
+  <main className="container mx-auto px-4 py-8">
+    {/* Hero and Top5Markets Grid */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+      <div className="bg-white shadow-lg rounded-lg p-6 h-full">
+        {selectedCommodity ? (
+          <Hero
+            commodityName={selectedCommodity.commodity_name}
+            variety={selectedCommodity.commodity_variety}
+            priceDetails={priceDetails}
+          />
+        ) : (
+          <p className="text-center mt-8 text-gray-600">
+            Select a commodity to view details
+          </p>
+        )}
+      </div>
+      <div className="bg-white shadow-lg rounded-lg p-6 h-full">
+        {selectedCommodity ? (
+          <Top5Markets
             marketName={marketName}
             commodityName={selectedCommodity.commodity_name}
             commodityId={selectedCommodity.commodity_id}
             variety={selectedCommodity.commodity_variety}
           />
-          
-            ) : (
-              <p className="text-center mt-8 text-gray-600">
-                Select a commodity to view details
-              </p>
-            )}
-          </div>
-        </div>
+        ) : (
+          <p className="text-center mt-8 text-gray-600">
+            Select a commodity to view details
+          </p>
+        )}
+      </div>
+    </div>
 
-        <div className="bg-white shadow-lg rounded-lg p-6 mb-8">
+    {/* MLTable and MarketMap Container */}
+    <div className="bg-white shadow-lg rounded-lg p-6 mb-8">
+      <div className="flex flex-col lg:flex-row gap-8">
+        <div className="lg:w-1/2 w-full">
+          {selectedCommodity ? (
+            <MLTable commodityId={selectedCommodity.commodity_id} />
+          ) : (
+            <p className="text-center mt-8 text-gray-600">
+              Select a commodity to view details
+            </p>
+          )}
+        </div>
+        <div className="lg:w-1/2 w-full">
           <MarketMap />
         </div>
-
-        <div className="bg-white shadow-lg rounded-lg p-6 mb-8">
-        {selectedCommodity ? (
-          <MLTable 
-          commodityId={selectedCommodity.commodity_id}
-          />
-          
-        ) : (
-          <p className="text-center mt-8 text-gray-600">
-            Select a commodity to view details
-          </p>
-        )}
-        </div>
-
-        <div className="bg-white shadow-lg rounded-lg p-6">
-        {selectedCommodity ? (
-          <Chart 
-          commodityId={selectedCommodity.commodity_id}
-
-          />
-        ) : (
-          <p className="text-center mt-8 text-gray-600">
-            Select a commodity to view details
-          </p>
-        )}
-        </div>
-      </main> 
+      </div>
     </div>
+
+    {/* Chart Section */}
+    <div className="bg-white shadow-lg rounded-lg p-6">
+      {selectedCommodity ? (
+        <Chart commodityId={selectedCommodity.commodity_id} />
+      ) : (
+        <p className="text-center mt-8 text-gray-600">
+          Select a commodity to view details
+        </p>
+      )}
+    </div>
+  </main>
+</div>
+
   );
 }
