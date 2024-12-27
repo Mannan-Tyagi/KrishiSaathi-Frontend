@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { TrendingUp, DollarSign, Calendar } from "lucide-react";
+import { TrendingUp, Calendar } from "lucide-react";
 import Image from "next/image";
 import { getMarketId } from "./marketutils";
 
 const MLTable = ({ commodityId }) => {
   const [commodities, setCommodities] = useState([]);
   const [position, setPosition] = useState(0);
-  const [marketId, setMarketId] = useState(getMarketId() || "defaultMarketId"); // Default marketId if not available
+  const [marketId, setMarketId] = useState(getMarketId() || "defaultMarketId");
 
   useEffect(() => {
-    // Fetch commodity data from the API
     const fetchCommodities = async () => {
       try {
         const response = await fetch("http://127.0.0.1:8000/api/get-commodity/", {
@@ -25,11 +24,10 @@ const MLTable = ({ commodityId }) => {
         }
 
         const data = await response.json();
-        // Map the API response to the desired format
         const formattedData = data.map((item) => ({
           name: item.commodity_name,
-          price: parseFloat(item.modal_price), // Parse price as float
-          image: "/api/placeholder/32/32", // Replace with actual image source if available
+          price: parseFloat(item.modal_price),
+          image: "/api/placeholder/32/32",
         }));
 
         setCommodities(formattedData);
@@ -64,7 +62,6 @@ const MLTable = ({ commodityId }) => {
 
       if (response.ok) {
         const data = await response.json();
-        // Transform the API data to the format required by the UI
         const formattedData = data.map((item) => ({
           week: `Week ${item.week}`,
           price: parseFloat(item.avg_modal_price),
@@ -106,8 +103,7 @@ const MLTable = ({ commodityId }) => {
                 </div>
                 <div className="p-4">
                   <div className="text-2xl font-bold text-gray-800 flex items-center justify-center">
-                    <DollarSign className="w-5 h-5 text-green-500 mr-1" />
-                    {item.price.toFixed(2)}
+                    <span className="text-green-500">₹</span>{item.price.toFixed(2)}
                   </div>
                   <p className="mt-1 text-sm text-gray-600 text-center">
                     INR/100kg
@@ -125,7 +121,7 @@ const MLTable = ({ commodityId }) => {
             {[...commodities, ...commodities].map((commodity, index) => (
               <div key={index} className="inline-flex items-center mr-8">
                 <Image
-                  src={commodity.image}
+                  src={`/${commodity.name}.jpeg`}
                   alt={commodity.name}
                   className="w-8 h-8 mr-2 rounded-full"
                   width={32}

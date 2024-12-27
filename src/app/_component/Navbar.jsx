@@ -203,7 +203,7 @@ const Navbar = ({ onCommoditySelect }) => {
                       onClick={() => handleCommoditySelect(commodity)}
                     >
                       <Image
-                        src={`/${commodity.commodity_name}.jpg`}
+                        src={`/${commodity.commodity_name}.jpeg`}
                         alt={commodity.commodity_name}
                         width={40}
                         height={40}

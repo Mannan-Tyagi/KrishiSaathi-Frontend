@@ -89,7 +89,7 @@ export function Chart({ commodityId }) {
         <CardHeader className="bg-gradient-to-r from-blue-500 to-green-500 text-white">
           <CardTitle className="text-2xl font-bold flex items-center">
             <TrendingUp className="mr-2" />
-            Onion Price Trends in Darjeeling, West Bengal
+           ML Trends 
           </CardTitle>
           <CardDescription className="text-blue-100">
             Last 32 weeks of 2024 - Actual vs Predicted Prices
