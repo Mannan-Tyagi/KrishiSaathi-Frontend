@@ -12,7 +12,7 @@ const MLTable = ({ commodityId }) => {
     const fetchCommodities = async () => {
       try {
         const response = await fetch(
-          "http://127.0.0.1:8000/api/get-commodity/",
+          "https://xnv320z0-8000.inc1.devtunnels.ms/api/get-commodity/",
           {
             method: "POST",
             headers: {
@@ -55,7 +55,7 @@ const MLTable = ({ commodityId }) => {
   useEffect(() => {
     const fetchForecastData = async () => {
       const response = await fetch(
-        "http://127.0.0.1:8000/api/get-top6-forecast-price/",
+        "https://xnv320z0-8000.inc1.devtunnels.ms/api/get-top6-forecast-price/",
         {
           method: "POST",
           headers: {
