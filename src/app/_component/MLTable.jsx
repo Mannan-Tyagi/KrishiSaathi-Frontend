@@ -11,13 +11,16 @@ const MLTable = ({ commodityId }) => {
   useEffect(() => {
     const fetchCommodities = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:8000/api/get-commodity/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ market_id: marketId }),
-        });
+        const response = await fetch(
+          "http://127.0.0.1:8000/api/get-commodity/",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ market_id: marketId }),
+          }
+        );
 
         if (!response.ok) {
           throw new Error("Network response was not ok");
@@ -39,7 +42,9 @@ const MLTable = ({ commodityId }) => {
     fetchCommodities();
 
     const intervalId = setInterval(() => {
-      setPosition((prevPosition) => (prevPosition <= -100 ? 0 : prevPosition - 0.5));
+      setPosition((prevPosition) =>
+        prevPosition <= -100 ? 0 : prevPosition - 0.5
+      );
     }, 50);
 
     return () => clearInterval(intervalId);
@@ -49,16 +54,19 @@ const MLTable = ({ commodityId }) => {
 
   useEffect(() => {
     const fetchForecastData = async () => {
-      const response = await fetch("http://127.0.0.1:8000/api/get-top6-forecast-price/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          commodity_id: commodityId,
-          market_id: marketId,
-        }),
-      });
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/get-top6-forecast-price/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            commodity_id: commodityId,
+            market_id: marketId,
+          }),
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -103,7 +111,8 @@ const MLTable = ({ commodityId }) => {
                 </div>
                 <div className="p-4">
                   <div className="text-2xl font-bold text-gray-800 flex items-center justify-center">
-                    <span className="text-green-500">₹</span>{item.price.toFixed(2)}
+                    <span className="text-green-500">₹</span>
+                    {item.price.toFixed(2)}
                   </div>
                   <p className="mt-1 text-sm text-gray-600 text-center">
                     INR/100kg
@@ -117,7 +126,10 @@ const MLTable = ({ commodityId }) => {
 
       <div className="w-full max-w-4xl bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 rounded-xl shadow-lg overflow-hidden">
         <div className="p-4 overflow-hidden">
-          <div className="flex whitespace-nowrap" style={{ transform: `translateX(${position}%)` }}>
+          <div
+            className="flex whitespace-nowrap"
+            style={{ transform: `translateX(${position}%)` }}
+          >
             {[...commodities, ...commodities].map((commodity, index) => (
               <div key={index} className="inline-flex items-center mr-8">
                 <Image
