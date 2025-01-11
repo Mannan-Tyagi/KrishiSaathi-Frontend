@@ -25,7 +25,7 @@ const Navbar = ({ onCommoditySelect }) => {
   // Fetch states when component mounts
   useEffect(() => {
     const fetchMarketStates = async () => {
-      const response = await fetch("http://127.0.0.1:8000/api/get-market-states/");
+      const response = await fetch("https://xnv320z0-8000.inc1.devtunnels.ms/api/get-market-states/");
       const data = await response.json();
       setLocationData((prev) => ({
         ...prev,
@@ -40,7 +40,7 @@ const Navbar = ({ onCommoditySelect }) => {
   useEffect(() => {
     const fetchDistricts = async () => {
       if (selectedLocation.state) {
-        const response = await fetch("http://127.0.0.1:8000/api/get-market-districts/", {
+        const response = await fetch("https://xnv320z0-8000.inc1.devtunnels.ms/api/get-market-districts/", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -89,7 +89,7 @@ const Navbar = ({ onCommoditySelect }) => {
   useEffect(() => {
     const fetchMarkets = async () => {
       if (selectedLocation.district) {
-        const response = await fetch("http://127.0.0.1:8000/api/get-markets/", {
+        const response = await fetch("https://xnv320z0-8000.inc1.devtunnels.ms/api/get-markets/", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -117,7 +117,7 @@ const Navbar = ({ onCommoditySelect }) => {
   useEffect(() => {
     const fetchCommodities = async () => {
       if (selectedLocation.marketId) {
-        const response = await fetch("http://127.0.0.1:8000/api/get-commodity-details/", {
+        const response = await fetch("https://xnv320z0-8000.inc1.devtunnels.ms/api/get-commodity-details/", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

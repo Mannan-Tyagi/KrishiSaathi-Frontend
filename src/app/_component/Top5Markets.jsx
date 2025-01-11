@@ -33,7 +33,7 @@ export function Top5Markets({ marketName, commodityName, variety, commodityId })
     // Fetch data from API and map it to chartData
     async function fetchData() {
       try {
-        const response = await fetch("http://127.0.0.1:8000/api/get-top6-market-prices/", {
+        const response = await fetch("https://xnv320z0-8000.inc1.devtunnels.ms/api/get-top6-market-prices/", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

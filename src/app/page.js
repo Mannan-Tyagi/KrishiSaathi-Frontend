@@ -37,7 +37,7 @@ export default function Home() {
       console.log("Sending request with:", { marketId, commodityId });
 
       const response = await axios.post(
-        "http://127.0.0.1:8000/api/get-price-details/",
+        "https://xnv320z0-8000.inc1.devtunnels.ms/api/get-price-details/",
         {
           market_id: marketId,
           commodity_id: commodityId,
