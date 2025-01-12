@@ -9,12 +9,33 @@ import MarketMap from "./_component/MarketMap";
 import { Chart } from "./_component/Chart";
 import MLTable from "./_component/MLTable";
 import { Top5Markets } from "./_component/Top5Markets";
-
+import { Ticker } from "./_component/Ticker";
 export default function Home() {
   const [selectedCommodity, setSelectedCommodity] = useState(null);
   const [priceDetails, setPriceDetails] = useState([]);
   const [error, setError] = useState(null);
   const [marketName, setMarketName] = useState(null);
+
+  const [commodities, setCommodities] = useState([]);
+  const [position, setPosition] = useState(0);
+
+  // Example data fetching for commodities
+  useEffect(() => {
+    // Fetch commodities data here and set it
+    // For example:
+    setCommodities([
+      { name: "Wheat", price: 2000, image: "/Wheat.jpeg" },
+      { name: "Rice", price: 3000, image: "/Rice.jpeg" },
+      // Add more commodities as needed
+    ]);
+
+    // Ticker animation effect
+    const intervalId = setInterval(() => {
+      setPosition((prev) => (prev <= -100 ? 0 : prev - 0.5));
+    }, 50);
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   useEffect(() => {
     if (selectedCommodity) {
@@ -86,25 +107,24 @@ export default function Home() {
             )}
           </div>
         </div>
-
-        {/* MLTable and MarketMap Container */}
-        <div className="bg-white shadow-lg rounded-lg p-6 mb-8">
-          <div className="flex flex-col lg:flex-row gap-8">
-            <div className="lg:w-1/2 w-full">
-              {selectedCommodity ? (
-                <MLTable commodityId={selectedCommodity.commodity_id} />
-              ) : (
-                <p className="text-center mt-8 text-gray-600">
-                  Select a commodity to view details
-                </p>
-              )}
-            </div>
-            <div className="lg:w-1/2 w-full">
-              <MarketMap />
-            </div>
+        {/* MarketMap and MLTable Grid */}
+        <div className="w-full mb-8">
+          <MarketMap />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-5">
+          <div className="w-full">
+            {selectedCommodity ? (
+              <MLTable commodityId={selectedCommodity.commodity_id} />
+            ) : (
+              <p className="text-center mt-8 text-gray-600">
+                Select a commodity to view details
+              </p>
+            )}
           </div>
         </div>
-
+        <div className="mb-8">
+          <Ticker commodities={commodities} position={position} />
+        </div>
         {/* Chart Section */}
         <div className="bg-white shadow-lg rounded-lg p-6">
           {selectedCommodity ? (

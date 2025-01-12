@@ -26,20 +26,28 @@ const chartConfig = {
   },
 };
 
-export function Top5Markets({ marketName, commodityName, variety, commodityId }) {
+export function Top5Markets({
+  marketName,
+  commodityName,
+  variety,
+  commodityId,
+}) {
   const [chartData, setChartData] = useState([]);
 
   useEffect(() => {
     // Fetch data from API and map it to chartData
     async function fetchData() {
       try {
-        const response = await fetch("https://xnv320z0-8000.inc1.devtunnels.ms/api/get-top6-market-prices/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ commodity_id: commodityId }),
-        });
+        const response = await fetch(
+          "https://xnv320z0-8000.inc1.devtunnels.ms/api/get-top6-market-prices/",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ commodity_id: commodityId }),
+          }
+        );
         const data = await response.json();
 
         // Map API data to chartData format
@@ -62,7 +70,8 @@ export function Top5Markets({ marketName, commodityName, variety, commodityId })
       <Card>
         <CardHeader>
           <CardTitle>
-            Top Markets with Highest prices of {commodityName} <span className="text-sm">({variety})</span>
+            Top Markets with Highest prices of {commodityName}{" "}
+            <span className="text-sm">({variety})</span>
           </CardTitle>
         </CardHeader>
         <CardContent>

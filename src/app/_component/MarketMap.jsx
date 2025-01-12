@@ -422,7 +422,7 @@ const MarketMap = () => {
       zoom={5}
       style={{
         height: "400px",
-        width: "650px",
+        width: "1375px",
         borderRadius: "15px",
         overflow: "hidden",
         marginTop: "60px",

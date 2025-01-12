@@ -1,157 +1,187 @@
-import React, { useState, useEffect } from "react";
-import { TrendingUp, Calendar } from "lucide-react";
-import Image from "next/image";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import {
+  TrendingUp,
+  Calendar,
+  AlertCircle,
+  ArrowUp,
+  ArrowDown,
+  ArrowRight,
+} from "lucide-react";
 import { getMarketId } from "./marketutils";
 
-const MLTable = ({ commodityId }) => {
+const API_BASE_URL = "https://xnv320z0-8000.inc1.devtunnels.ms/api";
+
+export function MLTable({ commodityId }) {
   const [commodities, setCommodities] = useState([]);
   const [position, setPosition] = useState(0);
   const [marketId, setMarketId] = useState(getMarketId() || "defaultMarketId");
+  const [forecastData, setForecastData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchCommodities = async () => {
-      try {
-        const response = await fetch(
-          "https://xnv320z0-8000.inc1.devtunnels.ms/api/get-commodity/",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ market_id: marketId }),
-          }
-        );
+  const fetchCommodities = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/get-commodity/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ market_id: marketId }),
+      });
 
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
 
-        const data = await response.json();
-        const formattedData = data.map((item) => ({
+      const data = await response.json();
+      setCommodities(
+        data.map((item) => ({
           name: item.commodity_name,
-          price: parseFloat(item.modal_price),
-          image: "/api/placeholder/32/32",
-        }));
-
-        setCommodities(formattedData);
-      } catch (error) {
-        console.error("Failed to fetch commodities:", error);
-      }
-    };
-
-    fetchCommodities();
-
-    const intervalId = setInterval(() => {
-      setPosition((prevPosition) =>
-        prevPosition <= -100 ? 0 : prevPosition - 0.5
+          price: parseFloat(item.modal_price) || 0,
+          image: `/commodities/${item.commodity_name.toLowerCase()}.jpg`,
+        }))
       );
-    }, 50);
-
-    return () => clearInterval(intervalId);
+    } catch (error) {
+      setError("Failed to fetch commodities. Please try again later.");
+      console.error("Failed to fetch commodities:", error);
+    }
   }, [marketId]);
 
-  const [forecastData, setForecastData] = useState([]);
+  const fetchForecastData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`${API_BASE_URL}/get-top6-forecast-price/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          commodity_id: commodityId,
+          market_id: marketId,
+        }),
+      });
 
-  useEffect(() => {
-    const fetchForecastData = async () => {
-      const response = await fetch(
-        "https://xnv320z0-8000.inc1.devtunnels.ms/api/get-top6-forecast-price/",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            commodity_id: commodityId,
-            market_id: marketId,
-          }),
-        }
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
+
+      const data = await response.json();
+      setForecastData(
+        data.map((item, index, arr) => {
+          const price = parseFloat(item.avg_modal_price);
+          const prevPrice =
+            index > 0 ? parseFloat(arr[index - 1].avg_modal_price) : price;
+          return {
+            week: `Week ${item.week}`,
+            price,
+            predictedPrice: parseFloat(item.avg_predicted_price),
+            percentageChange:
+              index === 0 ? 0 : ((price - prevPrice) / prevPrice) * 100,
+          };
+        })
       );
-
-      if (response.ok) {
-        const data = await response.json();
-        const formattedData = data.map((item) => ({
-          week: `Week ${item.week}`,
-          price: parseFloat(item.avg_modal_price),
-          predictedPrice: parseFloat(item.avg_predicted_price),
-        }));
-        setForecastData(formattedData);
-      } else {
-        console.error("Failed to fetch forecast data:", response.statusText);
-      }
-    };
-
-    fetchForecastData();
+    } catch (error) {
+      setError("Failed to fetch forecast data. Please try again later.");
+      console.error("Failed to fetch forecast data:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [commodityId, marketId]);
 
-  return (
-    <div className="flex flex-col items-center justify-center w-full">
-      <div className="max-w-4xl rounded-xl shadow-2xl overflow-hidden mb-8">
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4">
-          <h2 className="text-3xl font-bold flex items-center">
-            <TrendingUp className="mr-2" />
-            Commodity Pricing Forecast
-          </h2>
-          <p className="mt-2 text-blue-100">
-            Future commodity pricing based on advanced ML predictions
-          </p>
-        </div>
-        <div className="p-2">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4">
-            {forecastData.map((item, index) => (
-              <div
-                key={index}
-                className="rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-105"
-              >
-                <div className="bg-indigo-100 p-3">
-                  <p className="font-medium text-indigo-800 flex items-center justify-center">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    {item.week}
-                  </p>
-                </div>
-                <div className="p-4">
-                  <div className="text-2xl font-bold text-gray-800 flex items-center justify-center">
-                    <span className="text-green-500">₹</span>
-                    {item.price.toFixed(2)}
-                  </div>
-                  <p className="mt-1 text-sm text-gray-600 text-center">
-                    INR/100kg
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setPosition((prev) => (prev <= -100 ? 0 : prev - 0.5));
+    }, 50);
+    return () => clearInterval(intervalId);
+  }, []);
 
-      <div className="w-full max-w-4xl bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 rounded-xl shadow-lg overflow-hidden">
-        <div className="p-4 overflow-hidden">
-          <div
-            className="flex whitespace-nowrap"
-            style={{ transform: `translateX(${position}%)` }}
-          >
-            {[...commodities, ...commodities].map((commodity, index) => (
-              <div key={index} className="inline-flex items-center mr-8">
-                <Image
-                  src={`/${commodity.name}.jpeg`}
-                  alt={commodity.name}
-                  className="w-8 h-8 mr-2 rounded-full"
-                  width={32}
-                  height={32}
-                />
-                <span className="font-semibold text-white">
-                  {commodity.name}:
-                </span>
-                <span className="ml-2 text-yellow-200">
-                  ₹{commodity.price.toFixed(2)}
-                </span>
-              </div>
-            ))}
+  useEffect(() => {
+    fetchCommodities();
+    fetchForecastData();
+  }, [fetchCommodities, fetchForecastData]);
+
+  const formatPrice = useMemo(
+    () => (price) =>
+      `₹${price.toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+    []
+  );
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center p-6 bg-red-50/80 rounded-lg backdrop-blur-sm border border-red-200">
+        <AlertCircle className="w-6 h-6 text-red-500 mr-2" />
+        <p className="text-red-700 font-medium">{error}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center w-full gap-8 p-4">
+      <div className="w-full max-w-4xl rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden bg-white/80 backdrop-blur-sm">
+        <div className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white p-8 relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
+          <div className="relative">
+            <h2 className="text-3xl font-bold flex items-center gap-3 mb-3">
+              <TrendingUp className="w-8 h-8" />
+              Commodity Pricing Forecast
+            </h2>
+            <p className="text-violet-100 text-lg">
+              Future commodity pricing based on advanced ML predictions
+            </p>
           </div>
+        </div>
+
+        <div className="p-6">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-violet-200 border-t-violet-600"></div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {forecastData.map((item, index) => (
+                <div
+                  key={index}
+                  className="rounded-xl overflow-hidden transition-all duration-300 hover:scale-102 bg-white border border-violet-100 hover:border-violet-200 hover:shadow-lg"
+                >
+                  <div className="bg-gradient-to-r from-violet-50 to-indigo-50 p-4">
+                    <p className="font-semibold text-violet-900 flex items-center justify-center gap-2">
+                      <Calendar className="w-5 h-5 text-violet-600" />
+                      {item.week}
+                    </p>
+                  </div>
+                  <div className="p-6">
+                    <div className="text-2xl font-bold text-gray-800 flex items-center justify-center">
+                      {formatPrice(item.price)}
+                    </div>
+                    <p className="mt-2 text-sm text-gray-600 text-center">
+                      INR/100kg
+                    </p>
+                    {item.percentageChange !== undefined && (
+                      <div
+                        className={`mt-3 flex items-center justify-center gap-1 text-sm font-medium ${
+                          item.percentageChange > 0
+                            ? "text-emerald-600"
+                            : item.percentageChange < 0
+                            ? "text-red-600"
+                            : "text-gray-600"
+                        }`}
+                      >
+                        {item.percentageChange > 0 ? (
+                          <ArrowUp className="w-4 h-4" />
+                        ) : item.percentageChange < 0 ? (
+                          <ArrowDown className="w-4 h-4" />
+                        ) : (
+                          <ArrowRight className="w-4 h-4" />
+                        )}
+                        {Math.abs(item.percentageChange).toFixed(1)}%
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
-};
+}
 
 export default MLTable;
