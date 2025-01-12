@@ -10,6 +10,7 @@ import { Chart } from "./_component/Chart";
 import MLTable from "./_component/MLTable";
 import { Top5Markets } from "./_component/Top5Markets";
 import { Ticker } from "./_component/Ticker";
+import CommodityComparison from "./_component/comparison";
 export default function Home() {
   const [selectedCommodity, setSelectedCommodity] = useState(null);
   const [priceDetails, setPriceDetails] = useState([]);
@@ -120,6 +121,9 @@ export default function Home() {
                 Select a commodity to view details
               </p>
             )}
+          </div>
+          <div>
+            <CommodityComparison />
           </div>
         </div>
         <div className="mb-8">
