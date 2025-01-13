@@ -515,7 +515,7 @@ const MarketMap = () => {
               <select
                 value={selectedState}
                 onChange={(e) => setSelectedState(e.target.value)}
-                className="px-4 py-2 rounded-lg bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30"
+                className="px-4 py-2 rounded-lg bg-white/10 text-black border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30"
               >
                 <option value="All">All States</option>
                 {Object.keys(groupedMarkets)

@@ -24,7 +24,7 @@ export const Ticker = memo(({ commodities, position }) => {
   );
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full rounded-lg overflow-hidden">
       {/* Gradient overlay for smooth fade effect */}
       <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-blue-500/90 to-transparent z-10" />
       <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-purple-700/90 to-transparent z-10" />
