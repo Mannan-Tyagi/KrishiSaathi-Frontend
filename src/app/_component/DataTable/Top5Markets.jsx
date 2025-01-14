@@ -15,7 +15,12 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+// page.js
 
+import { BASE_BACKEND_URL } from '../../utils';
+
+// Use BASE_BACKEND_URL in your code
+console.log(BASE_BACKEND_URL);
 export const description = "A bar chart with a label";
 
 // Define the initial chart config
@@ -26,20 +31,28 @@ const chartConfig = {
   },
 };
 
-export function Top5Markets({ marketName, commodityName, variety, commodityId }) {
+export function Top5Markets({
+  marketName,
+  commodityName,
+  variety,
+  commodityId,
+}) {
   const [chartData, setChartData] = useState([]);
 
   useEffect(() => {
     // Fetch data from API and map it to chartData
     async function fetchData() {
       try {
-        const response = await fetch("http://127.0.0.1:8000/api/get-top6-market-prices/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ commodity_id: commodityId }),
-        });
+        const response = await fetch(
+          `${BASE_BACKEND_URL}/api/get-top6-market-prices/`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ commodity_id: commodityId }),
+          }
+        );
         const data = await response.json();
 
         // Map API data to chartData format
@@ -62,7 +75,8 @@ export function Top5Markets({ marketName, commodityName, variety, commodityId })
       <Card>
         <CardHeader>
           <CardTitle>
-            Top Markets with Highest prices of {commodityName} <span className="text-sm">({variety})</span>
+            Top Markets with Highest prices of {commodityName}{" "}
+            <span className="text-sm">({variety})</span>
           </CardTitle>
         </CardHeader>
         <CardContent>

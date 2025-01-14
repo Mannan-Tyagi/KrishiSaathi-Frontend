@@ -1,8 +1,18 @@
+// utils.js
+
+// Define the base backend link
+const BASE_BACKEND_URL = "http://127.0.0.1:8000";
+
+// Export the constant
+export { BASE_BACKEND_URL };
+
 // marketUtils.js
 
 // Variable to hold the selected market ID
 let selectedMarketId = null;
 let selectedMarketName = null;  // Variable to hold the selected market name
+let selectedCommodityId = null; // Variable to hold the selected commodity ID
+
 // Function to set the market ID
 export const setMarketId = (marketId) => {
   selectedMarketId = marketId;
@@ -23,4 +33,12 @@ export const getMarketName = () => {
   return selectedMarketName;
 };
 
+// Function to set the commodity ID
+export const setCommodityId = (commodityId) => {
+  selectedCommodityId = commodityId;
+};
 
+// Function to get the commodity ID
+export const getCommodityId = () => {
+  return selectedCommodityId;
+};
