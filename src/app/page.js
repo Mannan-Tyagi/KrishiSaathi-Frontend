@@ -156,7 +156,7 @@ const handleCommoditySelect = async (commodity, marketId) => {
   const getTimeDifference = () => {
     const now = new Date();
     const diff = Math.floor((now - lastUpdated) / 1000 / 60);
-    return `${diff} mins ago`;
+    return `at 09:02 AM 1/15/2025`;
   };
   
   return (
@@ -169,7 +169,7 @@ const handleCommoditySelect = async (commodity, marketId) => {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Market Intelligence Dashboard
+              Food Commodity Market Intelligence Dashboard
             </h1>
             <p className="text-gray-500 mt-1">
               Real-time insights and AI-powered predictions
@@ -180,10 +180,10 @@ const handleCommoditySelect = async (commodity, marketId) => {
               <RefreshCcw className="w-4 h-4" />
               <span>Last updated: {getTimeDifference()}</span>
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+            {/* <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
               <Filter className="w-4 h-4" />
               <span>Filters</span>
-            </button>
+            </button> */}
           </div>
         </div>
 

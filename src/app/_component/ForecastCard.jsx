@@ -68,12 +68,12 @@ const ForecastCard = ({ data, isLoading, error, selectedCommodity }) => {
             </div>
           </div>
 
-          <div>
+          {/* <div>
             <p className="text-xs text-gray-500 mb-1">Current Price</p>
             <p className="text-base font-semibold text-gray-700">
               ₹{formatPrice(avg_modal_price)}
             </p>
-          </div>
+          </div> */}
 
           <div className="mt-2">
             <p className="text-xs text-gray-500 mb-1">Predicted Price</p>

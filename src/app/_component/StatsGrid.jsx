@@ -3,21 +3,21 @@ import { Store, Wheat, TrendingUp, Calendar } from 'lucide-react';
 import { StatCard } from './StatCard';
 import { format } from 'date-fns';
 
-const currentDate = new Date('2025-01-14 07:02:52');
+const currentDate = new Date('2025-01-15 09:02:52');
 
 const statsData = [
   {
     title: "Total Markets",
-    value: "3,245",
-    change: "+12%",
+    value: "4,888",
+    change: "+3",
     up: true,
     icon: Store,
     description: "Active agricultural markets"
   },
   {
     title: "Total Commodities",
-    value: "156",
-    change: "+8.1%",
+    value: "3,895",
+    change: "+1",
     up: true,
     icon: Wheat,
     description: "Tracked agricultural products"
