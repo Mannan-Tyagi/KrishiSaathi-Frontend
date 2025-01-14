@@ -5,14 +5,14 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../components/ui/select";
+} from "../../../components/ui/select";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../../components/ui/card";
+} from "../../../components/ui/card";
 import {
   LineChart,
   Line,
