@@ -1,46 +1,168 @@
 "use client";
 
-import React, { useState } from "react"
-import {
-  Search,
-  Bell,
-  ChevronDown,
-  MapPin,
-  TrendingUp,
-  BarChart3,
-  Calendar,
-  ArrowUpRight,
-  ArrowDownRight,
-  Droplets,
-  Sun,
-  Wind,
-  CloudRain,
-  Settings,
-  Filter,
-  Download,
-  Share2,
-  AlertTriangle,
-  Zap,
-  Truck,
-  Warehouse,
-  Users,
-  Clock,
-  RefreshCcw
-} from "lucide-react"
+import React, { useEffect, useState } from "react";
+import { Filter, RefreshCcw } from "lucide-react";
 import Navbar from "./_component/Navbar";
 import { StatsGrid } from "./_component/StatsGrid";
 import { CommodityCard } from "./_component/CommodityCard";
 import { TopMarketsCard } from "./_component/TopMarketsCard";
 import { WeatherImpactCard } from "./_component/WeatherImpactCard";
 import ForecastCard from "./_component/ForecastCard";
+import { getCommodityId } from "./utils";
+import PriceAnalytics from "./_component/PriceAnalytics";
 
 function App() {
-  const [selectedTab, setSelectedTab] = useState("overview")
+  const [selectedCommodity, setSelectedCommodity] = useState(null);
+  const [selectedMarketId, setSelectedMarketId] = useState(null);
+  const [commodityData, setCommodityData] = useState(null);
+  const [topMarketsData, setTopMarketsData] = useState([]);
+  const [isLoadingCommodity, setIsLoadingCommodity] = useState(false);
+  const [isLoadingMarkets, setIsLoadingMarkets] = useState(false);
+  const [commodityError, setCommodityError] = useState(null);
+  const [marketsError, setMarketsError] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  // Fetch commodity data
+  const fetchCommodityData = async (commodity, marketId) => {
+    setIsLoadingCommodity(true);
+    setCommodityError(null);
+    
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/get-price-details/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          market_id: marketId, 
+          commodity_id: commodity.commodity_id 
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch commodity data. Status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setCommodityData(data[0]);
+    } catch (error) {
+      console.error("Error fetching commodity data:", error);
+      console.log(commodity.id);
+      setCommodityError(error.message);
+    } finally {
+      setIsLoadingCommodity(false);
+    }
+  };
+  // Fetch top markets data
+  const fetchTopMarketsData = async (commodity) => {
+    if (!commodity?.commodity_id) {
+      console.log('No commodity ID provided for fetching top markets');
+      return;
+    }
+  
+    setIsLoadingMarkets(true);
+    setMarketsError(null);
+    
+    try {
+      console.log('Fetching top markets for commodity:', commodity);
+      const response = await fetch("http://127.0.0.1:8000/api/get-top6-market-prices/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          commodity_id: commodity.commodity_id
+        }),
+      });
+  
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch market data. Status: ${response.status}. Details: ${errorText}`);
+      }
+  
+      const data = await response.json();
+      console.log('Received top markets data:', data);
+      setTopMarketsData(data);
+    } catch (error) {
+      console.error("Error fetching market data:", error);
+      setMarketsError(error.message);
+    } finally {
+      setIsLoadingMarkets(false);
+    }
+  };
+  
+  // Add these new state variables at the top of your App component
+const [forecastData, setForecastData] = useState([]);
+const [isLoadingForecast, setIsLoadingForecast] = useState(false);
+const [forecastError, setForecastError] = useState(null);
 
+// Add this new function to fetch forecast data
+const fetchForecastData = async (commodity, marketId) => {
+  if (!commodity?.commodity_id || !marketId) {
+    console.log('Missing required data for forecast fetch');
+    return;
+  }
+
+  setIsLoadingForecast(true);
+  setForecastError(null);
+
+  try {
+    console.log('Fetching forecast data:', { commodity_id: commodity.commodity_id, market_id: marketId });
+    const response = await fetch("http://127.0.0.1:8000/api/get-top6-forecast-price/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        market_id: marketId,
+        commodity_id: commodity.commodity_id
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to fetch forecast data. Status: ${response.status}. Details: ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('Received forecast data:', data);
+    setForecastData(data);
+  } catch (error) {
+    console.error("Error fetching forecast data:", error);
+    setForecastError(error.message);
+  } finally {
+    setIsLoadingForecast(false);
+  }
+};
+
+// Update the handleCommoditySelect function to include forecast data
+const handleCommoditySelect = async (commodity, marketId) => {
+  console.log("Selected Commodity:", commodity);
+  setSelectedCommodity(commodity);
+  setSelectedMarketId(marketId);
+  setLastUpdated(new Date());
+
+  // Clear existing data
+  setCommodityData(null);
+  setTopMarketsData([]);
+  setForecastData([]);
+
+  // Fetch all data
+  try {
+    await Promise.all([
+      fetchCommodityData(commodity, marketId),
+      fetchTopMarketsData(commodity),
+      fetchForecastData(commodity, marketId)
+    ]);
+  } catch (error) {
+    console.error("Error fetching data:", error);
+  }
+};
+
+  // Function to format the time difference
+  const getTimeDifference = () => {
+    const now = new Date();
+    const diff = Math.floor((now - lastUpdated) / 1000 / 60);
+    return `${diff} mins ago`;
+  };
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
-      <Navbar />
-
+      <Navbar onCommoditySelect={handleCommoditySelect} />
+      
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
@@ -56,7 +178,7 @@ function App() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <RefreshCcw className="w-4 h-4" />
-              <span>Last updated: 2 mins ago</span>
+              <span>Last updated: {getTimeDifference()}</span>
             </div>
             <button className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
               <Filter className="w-4 h-4" />
@@ -66,123 +188,67 @@ function App() {
         </div>
 
         {/* Quick Stats */}
-        <div>
+        <div className="mb-6">
           <StatsGrid />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Price Card */}
-          <CommodityCard  name="Onion"
-        variety="Red Variety"
-        quality="Premium Quality"
-        image="https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?auto=format&fit=crop&w=64&h=64"
-        lastUpdated={new Date()}
-        volume="2.5K MT"
-        currentPrice={3855}
-        priceUnit="100 KG"
-        priceChange={-25}
-        priceChangePercentage={-0.54}
-        metrics={{
-          low24h: { value: 3800, change: "-1.2%" },
-          high24h: { value: 3950, change: "+2.1%" },
-          average7d: { value: 3875, change: "+0.8%" }
-        }}
-        isMostTraded={true} />
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {/* Commodity Card Section */}
+          <div>
+            {isLoadingCommodity && (
+              <div className="flex items-center justify-center h-64 bg-white rounded-xl border border-emerald-100">
+                <div className="text-gray-500">Loading commodity data...</div>
+              </div>
+            )}
+            
+            {commodityError && (
+              <div className="flex items-center justify-center h-64 bg-white rounded-xl border border-red-100">
+                <div className="text-red-500">{commodityError}</div>
+              </div>
+            )}
+            
+            {!isLoadingCommodity && !commodityError && commodityData && (
+              <CommodityCard data={commodityData} />
+            )}
+            
+            {!isLoadingCommodity && !commodityError && !commodityData && !selectedCommodity && (
+              <div className="flex items-center justify-center h-64 bg-white rounded-xl border border-emerald-100">
+                <div className="text-gray-500">Select a commodity to view details</div>
+              </div>
+            )}
+          </div>
+
           {/* Market Trends */}
-          {/* <div className="bg-white rounded-xl shadow-sm p-6 border border-emerald-100 hover:shadow-lg transition-all duration-200">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-blue-600" />
-                </div>
-                <h2 className="text-lg font-bold text-gray-800">Top Markets</h2>
-              </div>
-              <div className="flex items-center gap-3">
-                <select className="text-sm border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-gray-50">
-                  <option>Last 24 hours</option>
-                  <option>Last 7 days</option>
-                  <option>Last 30 days</option>
-                </select>
-                <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                  <Download className="w-4 h-4 text-gray-500" />
-                </button>
-              </div>
-            </div>
-            <div className="space-y-4">
-              {[
-                {
-                  market: "Kolkata Market",
-                  price: 3800,
-                  change: "+2.3%",
-                  volume: "450 MT"
-                },
-                {
-                  market: "Solapur",
-                  price: 3600,
-                  change: "-1.2%",
-                  volume: "380 MT"
-                },
-                {
-                  market: "Mumbai",
-                  price: 3900,
-                  change: "+3.1%",
-                  volume: "520 MT"
-                },
-                {
-                  market: "Bangalore",
-                  price: 3700,
-                  change: "-0.5%",
-                  volume: "410 MT"
-                }
-              ].map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-4 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-200">
-                      <MapPin className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-900">
-                        {item.market}
-                      </span>
-                      <p className="text-sm text-gray-500">
-                        Volume: {item.volume}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-semibold text-gray-900">
-                      ₹{item.price}
-                    </p>
-                    <p
-                      className={`text-sm ${
-                        item.change.startsWith("+")
-                          ? "text-emerald-600"
-                          : "text-red-500"
-                      }`}
-                    >
-                      {item.change}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div> */}
-           <TopMarketsCard 
-        title="Top Markets" /> 
+          <TopMarketsCard 
+            data={topMarketsData}
+            isLoading={isLoadingMarkets}
+            error={marketsError}
+            selectedCommodity={selectedCommodity}
+          />
         </div>
 
         {/* Weather Impact */}
-        <WeatherImpactCard 
-        lastUpdated={new Date('2025-01-14T06:50:42')}
-      />
+        <div className="mb-6">
+          <WeatherImpactCard lastUpdated={lastUpdated} />
+        </div>
+
         {/* Forecast Section */}
-        <ForecastCard />
+        <div>
+        <ForecastCard 
+    data={forecastData}
+    isLoading={isLoadingForecast}
+    error={forecastError}
+    selectedCommodity={selectedCommodity}
+  />
+        <PriceAnalytics 
+  selectedCommodity={selectedCommodity}
+  selectedMarketId={selectedMarketId}
+/>
+        </div>
       </main>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

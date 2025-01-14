@@ -1,5 +1,4 @@
-// components/TopMarketsCard.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TrendingUp, Download, MapPin, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 const TimeRangeSelect = ({ value, onChange }) => (
@@ -14,8 +13,18 @@ const TimeRangeSelect = ({ value, onChange }) => (
   </select>
 );
 
-const MarketItem = ({ market, price, change, volume }) => {
-  const isPositive = change.startsWith('+');
+const MarketItem = ({ item }) => {
+  // Safely parse prices
+  const modalPrice = parseFloat(item.modal_price) || 0;
+  const minPrice = parseFloat(item.min_price) || 0;
+  const maxPrice = parseFloat(item.max_price) || 0;
+
+  // Calculate price change percentage only if we have valid numbers
+  const priceRange = minPrice > 0 ? 
+    ((maxPrice - minPrice) / minPrice * 100).toFixed(1) : 
+    0;
+  
+  const isPositive = maxPrice >= modalPrice;
   const Icon = isPositive ? ArrowUpRight : ArrowDownRight;
 
   return (
@@ -29,61 +38,52 @@ const MarketItem = ({ market, price, change, volume }) => {
         </div>
         <div>
           <span className="font-medium text-gray-900 group-hover:text-blue-700 transition-colors">
-            {market}
+            {item.market_name || 'Market Name Not Available'}
           </span>
           <p className="text-sm text-gray-500">
-            Volume: {volume}
+            {item.arrival_date_string}
           </p>
         </div>
       </div>
       <div className="text-right">
         <p className="text-lg font-semibold text-gray-900">
-          ₹{price.toLocaleString()}
+          ₹{modalPrice.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
         </p>
         <div className="flex items-center justify-end gap-1">
           <Icon className={`w-4 h-4 ${isPositive ? 'text-emerald-600' : 'text-red-500'}`} />
           <p className={`text-sm font-medium ${isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
-            {change}
+            Range: {priceRange}%
           </p>
         </div>
+        <p className="text-xs text-gray-500 mt-1">
+          Min: ₹{minPrice.toLocaleString('en-IN')} | Max: ₹{maxPrice.toLocaleString('en-IN')}
+        </p>
       </div>
     </div>
   );
 };
 
-export const TopMarketsCard = ({ 
-  title = "Top Markets",
-  onDownload = () => console.log("Download data"),
-}) => {
+export const TopMarketsCard = ({ data = [], isLoading, error, selectedCommodity }) => {
   const [timeRange, setTimeRange] = useState('24h');
-  
-  // Sample data - in a real app, this would come from props or an API
-  const marketData = [
-    {
-      market: "Kolkata Market",
-      price: 3800,
-      change: "+2.3%",
-      volume: "450 MT"
-    },
-    {
-      market: "Solapur",
-      price: 3600,
-      change: "-1.2%",
-      volume: "380 MT"
-    },
-    {
-      market: "Mumbai",
-      price: 3900,
-      change: "+3.1%",
-      volume: "520 MT"
-    },
-    {
-      market: "Bangalore",
-      price: 3700,
-      change: "-0.5%",
-      volume: "410 MT"
-    }
-  ];
+  const [localData, setLocalData] = useState(data);
+
+  useEffect(() => {
+    console.log('TopMarketsCard data updated:', data);
+    setLocalData(data);
+  }, [data]);
+
+  const handleTimeRangeChange = (newRange) => {
+    setTimeRange(newRange);
+    console.log('Time range changed to:', newRange);
+  };
+
+  if (!selectedCommodity?.commodity_id) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm p-6 border border-emerald-100 flex items-center justify-center h-64">
+        <p className="text-gray-500">Select a commodity to view top markets</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6 border border-emerald-100 hover:shadow-lg transition-all duration-200">
@@ -96,13 +96,17 @@ export const TopMarketsCard = ({
               <TrendingUp className="w-5 h-5 text-blue-600" />
             </div>
           </div>
-          <h2 className="text-lg font-bold text-gray-800">{title}</h2>
+          <h2 className="text-lg font-bold text-gray-800">
+            Top Markets - {selectedCommodity?.commodity_name || 'Loading...'}
+          </h2>
         </div>
         
         <div className="flex items-center gap-3">
-          <TimeRangeSelect value={timeRange} onChange={setTimeRange} />
+          <TimeRangeSelect 
+            value={timeRange} 
+            onChange={handleTimeRangeChange}
+          />
           <button 
-            onClick={onDownload}
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors group"
             title="Download data"
           >
@@ -112,17 +116,30 @@ export const TopMarketsCard = ({
       </div>
 
       {/* Market List */}
-      <div className="space-y-4">
-        {marketData.map((item, index) => (
-          <MarketItem
-            key={index}
-            market={item.market}
-            price={item.price}
-            change={item.change}
-            volume={item.volume}
-          />
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-48">
+          <p className="text-gray-500">Loading market data...</p>
+        </div>
+      ) : error ? (
+        <div className="flex items-center justify-center h-48">
+          <p className="text-red-500">{error}</p>
+        </div>
+      ) : localData.length === 0 ? (
+        <div className="flex items-center justify-center h-48">
+          <p className="text-gray-500">No market data available</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {localData.map((item, index) => (
+            <MarketItem
+              key={`${item.market_id}-${index}`}
+              item={item}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
+
+export default TopMarketsCard;

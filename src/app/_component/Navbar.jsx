@@ -1,75 +1,155 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Sprout, Menu, ChevronDown, Bell, Settings, Share2, Download } from 'lucide-react';
+import { Search, MapPin, Sprout, Menu, ChevronDown } from 'lucide-react';
+import { setCommodityId, setMarketId, setMarketName } from "../utils";
 
-// Keep the existing data structures from App.tsx
-const commodities = [
-    {
-        name: 'Onion',
-        image: 'https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?auto=format&fit=crop&q=80&w=100&h=100',
-        price: '₹25/kg',
-        trend: 'up'
-      },
-      {
-        name: 'Potato',
-        image: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&q=80&w=100&h=100',
-        price: '₹20/kg',
-        trend: 'down'
-      },
-      {
-        name: 'Tomato',
-        image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&q=80&w=100&h=100',
-        price: '₹40/kg',
-        trend: 'up'
-      },
-      {
-        name: 'Rice',
-        image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=100&h=100',
-        price: '₹60/kg',
-        trend: 'stable'
-      },
-      {
-        name: 'Wheat',
-        image: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&q=80&w=100&h=100',
-        price: '₹30/kg',
-        trend: 'down'
-      }
-  // ... other commodities
-];
+function Navbar({ onCommoditySelect }) {
+  // Track location selections
+  const [selectedState, setSelectedState] = useState('');
+  const [selectedDistrict, setSelectedDistrict] = useState('');
+  const [selectedMarket, setSelectedMarket] = useState('');
 
-const states = {
-  Gujarat: {
-    Rajkot: ['Gondal', 'Rajkot Main', 'Jetpur'],
-    Ahmedabad: ['Maninagar', 'Vasna', 'Jamalpur'],
-    Surat: ['Ring Road', 'Varachha', 'Katargam']
-  },
-  Maharashtra: {
-    Mumbai: ['Vashi', 'Dadar', 'Byculla'],
-    Pune: ['Market Yard', 'Hadapsar', 'Kharadi'],
-    Nagpur: ['Cotton Market', 'Itwari', 'Kalamna']
-  },
-  Karnataka: {
-    Bangalore: ['KR Market', 'Yeshwanthpur', 'RMC Yard'],
-    Mysore: ['Devaraja', 'Bandipalya', 'Santhepete'],
-    Hubli: ['Amargol', 'Old Hubli', 'Dharwad']
-  }
-  // ... other states
-};
-
-function Navbar() {
-  // State management from App.tsx
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showSearch, setShowSearch] = useState(false);
-  const [selectedState, setSelectedState] = useState('Gujarat');
-  const [selectedDistrict, setSelectedDistrict] = useState('Rajkot');
-  const [selectedMarket, setSelectedMarket] = useState('Gondal');
+  // For toggling modals and menus
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
 
-  // Filter commodities based on search
-  const filteredCommodities = commodities.filter(commodity =>
-    commodity.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // For searching commodities
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
 
+  // Lists from the backend
+  const [statesList, setStatesList] = useState([]);
+  const [districtsList, setDistrictsList] = useState([]);
+  const [marketsList, setMarketsList] = useState([]);
+  const [commoditiesList, setCommoditiesList] = useState([]);
+  
+  // Track the selected market and its ID
+  const [marketId, setMarketId] = useState(null);
+  // const [commodityId, setCommodityId] = useState(null);
+
+   // --------------------------------------------------------------------------
+  // 1) Fetch list of states on mount ( /api/get-market-states/ )
+  // --------------------------------------------------------------------------
+  useEffect(() => {
+    const fetchStates = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/get-market-states/');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch states. Status: ${response.status}`);
+        }
+        const data = await response.json();
+        setStatesList(data);
+      } catch (error) {
+        console.error('Error fetching states:', error);
+      }
+    };
+    fetchStates();
+  }, []);
+  // --------------------------------------------------------------------------
+  // 2) Fetch districts whenever selectedState changes
+  //    ( /api/get-market-districts/ with body { "market_state": selectedState } )
+  // --------------------------------------------------------------------------
+  useEffect(() => {
+    const fetchDistricts = async () => {
+      if (!selectedState) {
+        setDistrictsList([]);
+        setSelectedDistrict('');
+        return;
+      }
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/get-market-districts/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ market_state: selectedState }),
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch districts. Status: ${response.status}`);
+        }
+        const data = await response.json();
+        setDistrictsList(data);
+        setSelectedDistrict('');
+      } catch (error) {
+        console.error('Error fetching districts:', error);
+      }
+    };
+    fetchDistricts();
+  }, [selectedState]);
+  // --------------------------------------------------------------------------
+  // 3) Fetch markets any time selectedDistrict changes
+  //    ( /api/get-markets/ with body { "market_district": selectedDistrict } )
+  // --------------------------------------------------------------------------
+  useEffect(() => {
+    const fetchMarkets = async () => {
+      if (!selectedDistrict) {
+        setMarketsList([]);
+        setSelectedMarket('');
+        return;
+      }
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/get-markets/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ market_district: selectedDistrict }),
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch markets. Status: ${response.status}`);
+        }
+        const data = await response.json();
+        setMarketsList(data);
+        setSelectedMarket('');
+      } catch (error) {
+        console.error('Error fetching markets:', error);
+      }
+    };
+    fetchMarkets();
+  }, [selectedDistrict]);
+  // --------------------------------------------------------------------------
+  // 4) Fetch commodities whenever a market is selected
+  //    ( /api/get-commodity/ with body { "market_id": market_id } )
+  // --------------------------------------------------------------------------
+  const sortCommoditiesByDate = (commodities) => {
+    return commodities.sort((a, b) => new Date(b.date) - new Date(a.date));
+  };
+
+  // Fetch commodities whenever a market is selected
+  useEffect(() => {
+    const marketObj = marketsList.find((m) => m.market_name === selectedMarket);
+    if (!marketObj) {
+      setCommoditiesList([]);
+      return;
+    }
+    const fetchCommodities = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/get-commodity/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ market_id: String(marketObj.market_id) }),
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch commodities. Status: ${response.status}`);
+        }
+        const data = await response.json();
+        const sortedData = sortCommoditiesByDate(data);
+        setCommoditiesList(sortedData);
+        // Also store the market info for external usage
+        setMarketId(marketObj.market_id);
+      } catch (error) {
+        console.error('Error fetching commodities:', error);
+      }
+    };
+    fetchCommodities();
+  }, [selectedMarket, marketsList]);
+  // --------------------------------------------------------------------------
+  // 5) Filter the fetched commodities based on searchQuery
+  // --------------------------------------------------------------------------
+  const filteredCommodities = commoditiesList.filter((commodity) =>
+    commodity.commodity_name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  // Simple helper to load images from public/<commodity_name>.jpg
+  // Adjust or sanitize commodity names as needed for actual file naming
+  const getCommodityImage = (commodityName) => {
+    const sanitized = commodityName.replace(/\s+/g, '_');
+    return `/${sanitized}.jpeg`;
+  };
   return (
     <>
       <nav className="bg-white/80 backdrop-blur-md shadow-sm border-b border-emerald-100 sticky top-0 z-50">
@@ -89,11 +169,10 @@ function Navbar() {
               </div>
             </div>
 
-            {/* Search and Location Section - Desktop */}
+            {/* Search (center) */}
             <div className="hidden md:flex items-center flex-1 max-w-3xl mx-8 gap-4">
-              {/* Search Input with Glass Effect */}
               <div className="relative flex-1 group">
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-lg blur opacity-25 group-hover:opacity-40 transition duration-200"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-lg blur opacity-25 group-hover:opacity-40 transition duration-200" />
                 <div className="relative">
                   <input
                     type="text"
@@ -104,63 +183,64 @@ function Navbar() {
                       setShowSearch(true);
                     }}
                     onFocus={() => setShowSearch(true)}
-                    className="w-full px-4 py-2.5 rounded-lg border border-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white/80 backdrop-blur-sm"
+                    className="w-full px-4 py-2.5 rounded-lg border border-emerald-100
+                               focus:outline-none focus:ring-2 focus:ring-emerald-500
+                               focus:border-transparent bg-white/80 backdrop-blur-sm"
                   />
                   <Search className="absolute right-3 top-3 text-gray-400 w-5 h-5" />
                 </div>
 
-                {/* Search Results Dropdown */}
-                {showSearch && searchQuery && (
+                {/* Search Results for Desktop */}
+                {showSearch && searchQuery && filteredCommodities.length > 0 && (
                   <div className="absolute mt-1 w-full bg-white/90 backdrop-blur-md rounded-lg shadow-lg border border-emerald-100 max-h-96 overflow-y-auto">
                     {filteredCommodities.map((commodity) => (
                       <div
-                        key={commodity.name}
+                        key={commodity.commodity_id}
                         className="flex items-center p-3 hover:bg-emerald-50/80 cursor-pointer transition-colors"
                         onClick={() => {
-                          setSearchQuery(commodity.name);
+                          setCommodityId(commodity.commodity_id);
+                          onCommoditySelect?.(commodity,marketId);
+                          setSearchQuery(commodity.commodity_name);
                           setShowSearch(false);
                         }}
                       >
                         <img
-                          src={commodity.image}
-                          alt={commodity.name}
+                          src={getCommodityImage(commodity.commodity_name)}
+                          alt={commodity.commodity_name}
                           className="w-12 h-12 rounded-lg object-cover"
                         />
                         <div className="ml-3 flex-1">
-                          <div className="text-gray-700 font-medium">{commodity.name}</div>
-                          <div className="text-sm text-gray-500">{commodity.price}</div>
-                        </div>
-                        <div className={`text-sm ${commodity.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
-                          {commodity.trend === 'up' ? '↑' : '↓'}
+                          <div className="text-gray-700 font-medium">
+                            {commodity.commodity_name}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {commodity.modal_price
+                              ? `₹${commodity.modal_price}`
+                              : 'N/A'}
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
-
-              {/* Location Selector */}
-              <button
-                onClick={() => setShowLocationModal(true)}
-                className="flex items-center px-4 py-2.5 text-gray-700 hover:text-emerald-600 focus:outline-none bg-white/80 rounded-lg hover:bg-emerald-50/80 transition-colors border border-emerald-100"
-              >
-                <MapPin className="h-5 w-5 mr-2 text-emerald-600" />
-                <span>{selectedMarket}, {selectedDistrict}</span>
-                <ChevronDown className="ml-2 h-4 w-4" />
-              </button>
             </div>
 
             {/* Right Section */}
             <div className="flex items-center gap-4">
-              {/* Action Buttons - Desktop */}
-              <div className="hidden md:flex items-center gap-2">
-                <button className="p-2 rounded-lg hover:bg-emerald-50/80 transition-colors">
-                  <Share2 className="w-5 h-5 text-gray-600" />
-                </button>
-                <button className="p-2 rounded-lg hover:bg-emerald-50/80 transition-colors">
-                  <Bell className="w-5 h-5 text-gray-600" />
-                </button>
-              </div>
+              {/* The location button (on the right side) */}
+              <button
+                onClick={() => setShowLocationModal(true)}
+                className="hidden md:flex items-center px-4 py-2.5 text-gray-700 hover:text-emerald-600
+                           focus:outline-none bg-white/80 rounded-lg hover:bg-emerald-50/80
+                           transition-colors border border-emerald-100"
+              >
+                <MapPin className="h-5 w-5 mr-2 text-emerald-600" />
+                <span>
+                  {selectedMarket || 'Select Market'}, {selectedDistrict || 'Select District'}
+                </span>
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </button>
 
               {/* Mobile Menu Button */}
               <button
@@ -178,6 +258,7 @@ function Navbar() {
       {isMobileMenuOpen && (
         <div className="md:hidden bg-white/90 backdrop-blur-md border-b border-emerald-100">
           <div className="px-4 py-3 space-y-4">
+            {/* Mobile search with suggestions */}
             <div className="relative">
               <input
                 type="text"
@@ -187,22 +268,60 @@ function Navbar() {
                   setSearchQuery(e.target.value);
                   setShowSearch(true);
                 }}
-                className="w-full px-4 py-2.5 rounded-lg border border-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white/80"
+                className="w-full px-4 py-2.5 rounded-lg border border-emerald-100
+                           focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white/80"
               />
               <Search className="absolute right-3 top-3 h-5 w-5 text-gray-400" />
+
+              {showSearch && searchQuery && filteredCommodities.length > 0 && (
+                <div className="absolute mt-1 w-full bg-white/90 backdrop-blur-md rounded-lg shadow-lg border border-emerald-100 max-h-96 overflow-y-auto">
+                  {filteredCommodities.map((commodity) => (
+                    <div
+                      key={commodity.commodity_id}
+                      className="flex items-center p-3 hover:bg-emerald-50/80 cursor-pointer transition-colors"
+                      onClick={() => {
+                        setCommodityId(commodity.commodity_id);
+                        onCommoditySelect?.(commodity,marketId);
+                        setSearchQuery(commodity.commodity_name);
+                        setShowSearch(false);
+                      }}
+                    >
+                      <img
+                        src={getCommodityImage(commodity.commodity_name)}
+                        alt={commodity.commodity_name}
+                        className="w-12 h-12 rounded-lg object-cover"
+                      />
+                      <div className="ml-3 flex-1">
+                        <div className="text-gray-700 font-medium">
+                          {commodity.commodity_name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {commodity.modal_price
+                            ? `₹${commodity.modal_price}`
+                            : 'N/A'}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
+
+            {/* Location button on mobile menu */}
             <button
               onClick={() => setShowLocationModal(true)}
               className="w-full flex items-center px-4 py-2.5 text-gray-700 bg-emerald-50/50 rounded-lg"
             >
               <MapPin className="h-5 w-5 mr-2 text-emerald-600" />
-              <span>{selectedMarket}, {selectedDistrict}</span>
+              <span>
+                {selectedMarket || 'Select Market'}, {selectedDistrict || 'Select District'}
+              </span>
             </button>
           </div>
         </div>
       )}
 
-      {/* Location Modal */}
+      {/* Location Modal (centered) */}
       {showLocationModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white/90 backdrop-blur-md rounded-xl max-w-2xl w-full">
@@ -216,19 +335,26 @@ function Navbar() {
                   ✕
                 </button>
               </div>
-              
-              {/* Location Selection Grid */}
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* State Selection */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">State</label>
                   <select
                     value={selectedState}
-                    onChange={(e) => setSelectedState(e.target.value)}
-                    className="w-full p-2.5 border border-emerald-100 rounded-lg bg-white/80 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    onChange={(e) => {
+                      setSelectedState(e.target.value);
+                      setSelectedDistrict('');
+                      setSelectedMarket('');
+                    }}
+                    className="w-full p-2.5 border border-emerald-100 rounded-lg
+                               bg-white/80 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   >
-                    {Object.keys(states).map(state => (
-                      <option key={state} value={state}>{state}</option>
+                    <option value="">-- Choose State --</option>
+                    {statesList.map((st) => (
+                      <option key={st.market_state} value={st.market_state}>
+                        {st.market_state}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -238,11 +364,18 @@ function Navbar() {
                   <label className="block text-sm font-medium text-gray-700">District</label>
                   <select
                     value={selectedDistrict}
-                    onChange={(e) => setSelectedDistrict(e.target.value)}
-                    className="w-full p-2.5 border border-emerald-100 rounded-lg bg-white/80 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    onChange={(e) => {
+                      setSelectedDistrict(e.target.value);
+                      setSelectedMarket('');
+                    }}
+                    className="w-full p-2.5 border border-emerald-100 rounded-lg
+                               bg-white/80 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   >
-                    {Object.keys(states[selectedState]).map(district => (
-                      <option key={district} value={district}>{district}</option>
+                    <option value="">-- Choose District --</option>
+                    {districtsList.map((dist) => (
+                      <option key={dist.market_district} value={dist.market_district}>
+                        {dist.market_district}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -253,10 +386,14 @@ function Navbar() {
                   <select
                     value={selectedMarket}
                     onChange={(e) => setSelectedMarket(e.target.value)}
-                    className="w-full p-2.5 border border-emerald-100 rounded-lg bg-white/80 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-2.5 border border-emerald-100 rounded-lg
+                               bg-white/80 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   >
-                    {states[selectedState][selectedDistrict].map(market => (
-                      <option key={market} value={market}>{market}</option>
+                    <option value="">-- Choose Market --</option>
+                    {marketsList.map((mObj) => (
+                      <option key={mObj.market_id} value={mObj.market_name}>
+                        {mObj.market_name}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -266,7 +403,9 @@ function Navbar() {
               <div className="mt-6 flex justify-end">
                 <button
                   onClick={() => setShowLocationModal(false)}
-                  className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg hover:from-emerald-600 hover:to-teal-700 transition-colors shadow-lg shadow-emerald-200"
+                  className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600
+                             text-white rounded-lg hover:from-emerald-600 hover:to-teal-700
+                             transition-colors shadow-lg shadow-emerald-200"
                 >
                   Confirm Location
                 </button>
