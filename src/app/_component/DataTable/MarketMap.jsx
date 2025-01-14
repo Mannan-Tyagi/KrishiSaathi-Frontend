@@ -1,10 +1,17 @@
-"use client"; // Add this if you are using Next.js 13 App Router
+"use client";
 
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { useEffect, useState, useMemo } from "react";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  ZoomControl,
+} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-// Sample data with coordinates from the CSV
+// Market data with state grouping
 const marketData = [
   { id: 1, name: "Chittoor", latitude: 13.160105, longitude: 79.155551 },
   { id: 2, name: "Palamaner", latitude: 13.151597, longitude: 78.735667 },
@@ -406,45 +413,193 @@ const marketData = [
   // Add more market data as needed
 ];
 
-// Create a custom icon
-const customIcon = new L.Icon({
-  iconUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png", // URL to your custom icon
-  iconSize: [20, 33], // Size of the icon
-  iconAnchor: [10, 33], // Point of the icon which will correspond to marker's location
-  popupAnchor: [1, -28], // Point from which the popup should open relative to the iconAnchor
-});
+// Group markets by state
+const groupedMarkets = marketData.reduce((acc, market) => {
+  const state = market.state || "Other";
+  if (!acc[state]) acc[state] = [];
+  acc[state].push(market);
+  return acc;
+}, {});
+
+// Custom marker icon configuration with different colors per state
+const stateColors = {
+  "Andhra Pradesh": "#4F46E5",
+  Gujarat: "#7C3AED",
+  Chattisgarh: "#EC4899",
+  Goa: "#10B981",
+  Other: "#6366F1",
+};
+
+const createCustomIcon = (color = "#4F46E5") =>
+  new L.Icon({
+    iconUrl: `data:image/svg+xml;base64,${btoa(`
+    <svg width="32" height="48" viewBox="0 0 32 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M16 0C7.16 0 0 7.16 0 16C0 28 16 48 16 48C16 48 32 28 32 16C32 7.16 24.84 0 16 0ZM16 22C12.68 22 10 19.32 10 16C10 12.68 12.68 10 16 10C19.32 10 22 12.68 22 16C22 19.32 19.32 22 16 22Z" fill="${color}"/>
+    </svg>
+  `)}`,
+    iconSize: [32, 48],
+    iconAnchor: [16, 48],
+    popupAnchor: [0, -48],
+  });
 
 const MarketMap = () => {
+  const [userLocation, setUserLocation] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedState, setSelectedState] = useState("All");
+  const defaultCenter = [20.5937, 78.9629]; // Center of India
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation([
+            position.coords.latitude,
+            position.coords.longitude,
+          ]);
+          setLoading(false);
+        },
+        () => {
+          setLoading(false);
+        }
+      );
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  // Memoize filtered markets
+  const filteredMarkets = useMemo(() => {
+    if (selectedState === "All") return marketData;
+    return marketData.filter((market) => market.state === selectedState);
+  }, [selectedState]);
+
+  if (loading) {
+    return (
+      <div className="w-full h-[500px] flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-xl shadow-lg">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-indigo-900 font-medium">Loading map...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <MapContainer
-      center={[20.5937, 78.9629]} // Center of India
-      zoom={5}
-      style={{
-        height: "400px",
-        width: "1375px",
-        borderRadius: "15px",
-        overflow: "hidden",
-        marginTop: "60px",
-      }} // Added borderRadius and overflow
-    >
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      />
-      {marketData.map((market) => (
-        <Marker
-          key={market.id}
-          position={[market.latitude, market.longitude]}
-          icon={customIcon} // Set the custom icon
-        >
-          <Popup>
-            {market.name}, {market.latitude.toFixed(2)},{" "}
-            {market.longitude.toFixed(2)}
-          </Popup>
-        </Marker>
-      ))}
-    </MapContainer>
+    <div className="w-full space-y-4">
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="bg-gradient-to-r from-indigo-600 to-blue-600 p-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              Market Locations
+            </h2>
+            <div className="flex items-center gap-4">
+              <select
+                value={selectedState}
+                onChange={(e) => setSelectedState(e.target.value)}
+                className="px-4 py-2 rounded-lg bg-white/10 text-black border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30"
+              >
+                <option value="All">All States</option>
+                {Object.keys(groupedMarkets)
+                  .sort()
+                  .map((state) => (
+                    <option key={state} value={state}>
+                      {state}
+                    </option>
+                  ))}
+              </select>
+              <div className="text-white/90 text-sm">
+                Showing {filteredMarkets.length} markets
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4">
+          <MapContainer
+            center={userLocation || defaultCenter}
+            zoom={userLocation ? 8 : 5}
+            className="h-[600px] w-full rounded-lg shadow-inner"
+            style={{ background: "#f8fafc" }}
+            zoomControl={false}
+          >
+            <ZoomControl position="bottomright" />
+            <TileLayer
+              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            />
+
+            {userLocation && (
+              <Marker
+                position={userLocation}
+                icon={createCustomIcon("#2563EB")}
+              >
+                <Popup className="bg-white/90 backdrop-blur-sm">
+                  <div className="text-sm font-medium text-gray-900">
+                    Your Location
+                  </div>
+                </Popup>
+              </Marker>
+            )}
+
+            {filteredMarkets.map((market) => (
+              <Marker
+                key={market.id}
+                position={[market.latitude, market.longitude]}
+                icon={createCustomIcon(stateColors[market.state || "Other"])}
+              >
+                <Popup className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg">
+                  <div className="p-2">
+                    <h3 className="font-semibold text-gray-900">
+                      {market.name}
+                    </h3>
+                    {market.state && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {market.state}
+                      </p>
+                    )}
+                    <div className="mt-2 text-sm text-gray-600">
+                      <p>Latitude: {market.latitude.toFixed(4)}°</p>
+                      <p>Longitude: {market.longitude.toFixed(4)}°</p>
+                    </div>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 p-4 bg-white rounded-xl shadow-lg">
+        {Object.entries(stateColors).map(([state, color]) => (
+          <div key={state} className="flex items-center gap-2 text-sm">
+            <div
+              className="w-3 h-3 rounded-full"
+              style={{ backgroundColor: color }}
+            ></div>
+            <span className="text-gray-700">{state}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };
 
