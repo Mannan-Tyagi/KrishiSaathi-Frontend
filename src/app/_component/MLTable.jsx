@@ -13,10 +13,36 @@ const API_BASE_URL = "https://xnv320z0-8000.inc1.devtunnels.ms/api";
 
 export function MLTable({ commodityId }) {
   const [commodities, setCommodities] = useState([]);
+  const [position, setPosition] = useState(0);
   const [marketId, setMarketId] = useState(getMarketId() || "defaultMarketId");
   const [forecastData, setForecastData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const fetchCommodities = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/get-commodity/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ market_id: marketId }),
+      });
+
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
+
+      const data = await response.json();
+      setCommodities(
+        data.map((item) => ({
+          name: item.commodity_name,
+          price: parseFloat(item.modal_price) || 0,
+          image: `/commodities/${item.commodity_name.toLowerCase()}.jpg`,
+        }))
+      );
+    } catch (error) {
+      setError("Failed to fetch commodities. Please try again later.");
+      console.error("Failed to fetch commodities:", error);
+    }
+  }, [marketId]);
 
   const fetchForecastData = useCallback(async () => {
     try {
@@ -57,8 +83,16 @@ export function MLTable({ commodityId }) {
   }, [commodityId, marketId]);
 
   useEffect(() => {
+    const intervalId = setInterval(() => {
+      setPosition((prev) => (prev <= -100 ? 0 : prev - 0.5));
+    }, 50);
+    return () => clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    fetchCommodities();
     fetchForecastData();
-  }, [fetchForecastData]);
+  }, [fetchCommodities, fetchForecastData]);
 
   const formatPrice = useMemo(
     () => (price) =>
@@ -71,7 +105,7 @@ export function MLTable({ commodityId }) {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center p-6 bg-red-50/80 rounded-lg border border-red-200">
+      <div className="flex items-center justify-center p-6 bg-red-50/80 rounded-lg backdrop-blur-sm border border-red-200">
         <AlertCircle className="w-6 h-6 text-red-500 mr-2" />
         <p className="text-red-700 font-medium">{error}</p>
       </div>
@@ -80,42 +114,45 @@ export function MLTable({ commodityId }) {
 
   return (
     <div className="flex flex-col items-center justify-center w-full gap-8 p-4">
-      {/* Header Section with Gradient */}
-      <div className="w-full max-w-4xl rounded-xl shadow-lg overflow-hidden bg-[#FEF3C7] border border-[#93C5FD]">
-        <div className="bg-gradient-to-r from-[#A78BFA] to-[#93C5FD] text-white p-8 relative">
-          <h2 className="text-3xl font-bold flex items-center gap-3 mb-3">
-            <TrendingUp className="w-8 h-8" />
-            Commodity Pricing Forecast
-          </h2>
-          <p className="text-lg text-white/80">
-            Future commodity pricing based on advanced ML predictions
-          </p>
+      <div className="w-full max-w-4xl rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden bg-white/80 backdrop-blur-sm">
+        <div className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white p-8 relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
+          <div className="relative">
+            <h2 className="text-3xl font-bold flex items-center gap-3 mb-3">
+              <TrendingUp className="w-8 h-8" />
+              Commodity Pricing Forecast
+            </h2>
+            <p className="text-violet-100 text-lg">
+              Future commodity pricing based on advanced ML predictions
+            </p>
+          </div>
         </div>
 
-        {/* Forecast Data */}
         <div className="p-6">
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#93C5FD] border-t-[#A78BFA]"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-violet-200 border-t-violet-600"></div>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {forecastData.map((item, index) => (
                 <div
                   key={index}
-                  className="rounded-xl bg-white shadow-md border border-[#93C5FD] p-6 transition-all duration-300 hover:scale-105 hover:shadow-xl"
+                  className="rounded-xl overflow-hidden transition-all duration-300 hover:scale-102 bg-white border border-violet-100 hover:border-violet-200 hover:shadow-lg"
                 >
-                  <div className="bg-gradient-to-r from-[#A78BFA] to-[#F472B6] p-4 rounded-lg">
-                    <p className="font-semibold text-white flex items-center justify-center gap-2">
-                      <Calendar className="w-5 h-5" />
+                  <div className="bg-gradient-to-r from-violet-50 to-indigo-50 p-4">
+                    <p className="font-semibold text-violet-900 flex items-center justify-center gap-2">
+                      <Calendar className="w-5 h-5 text-violet-600" />
                       {item.week}
                     </p>
                   </div>
-                  <div className="text-center mt-4">
-                    <div className="text-2xl font-bold text-[#374151]">
+                  <div className="p-6">
+                    <div className="text-2xl font-bold text-gray-800 flex items-center justify-center">
                       {formatPrice(item.price)}
                     </div>
-                    <p className="mt-2 text-sm text-gray-600">INR / 100kg</p>
+                    <p className="mt-2 text-sm text-gray-600 text-center">
+                      INR/100kg
+                    </p>
                     {item.percentageChange !== undefined && (
                       <div
                         className={`mt-3 flex items-center justify-center gap-1 text-sm font-medium ${
@@ -143,11 +180,6 @@ export function MLTable({ commodityId }) {
           )}
         </div>
       </div>
-
-      {/* Primary Button */}
-      <button className="px-6 py-3 bg-[#6366F1] hover:bg-[#4F46E5] text-white font-semibold rounded-lg shadow-md">
-        View Full Report
-      </button>
     </div>
   );
 }
