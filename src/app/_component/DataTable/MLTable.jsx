@@ -7,9 +7,10 @@ import {
   ArrowDown,
   ArrowRight,
 } from "lucide-react";
-import { getMarketId } from "./marketutils";
+import { getMarketId } from "../marketutils";
+import { BASE_BACKEND_URL } from "../../utils";
 
-const API_BASE_URL = "https://xnv320z0-8000.inc1.devtunnels.ms/api";
+const API_BASE_URL = `${BASE_BACKEND_URL}/api`;
 
 export function MLTable({ commodityId }) {
   const [commodities, setCommodities] = useState([]);

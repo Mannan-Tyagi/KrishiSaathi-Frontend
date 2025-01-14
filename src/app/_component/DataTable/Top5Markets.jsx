@@ -15,7 +15,12 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+// page.js
 
+import { BASE_BACKEND_URL } from '../../utils';
+
+// Use BASE_BACKEND_URL in your code
+console.log(BASE_BACKEND_URL);
 export const description = "A bar chart with a label";
 
 // Define the initial chart config
@@ -39,7 +44,7 @@ export function Top5Markets({
     async function fetchData() {
       try {
         const response = await fetch(
-          "https://xnv320z0-8000.inc1.devtunnels.ms/api/get-top6-market-prices/",
+          `${BASE_BACKEND_URL}/api/get-top6-market-prices/`,
           {
             method: "POST",
             headers: {

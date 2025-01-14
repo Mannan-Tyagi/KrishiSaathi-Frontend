@@ -11,7 +11,7 @@ const Hero = ({
   // Determine if the price is increasing based on price_change
   const isIncreasing =
     priceDetails.length > 0 ? parseFloat(priceDetails[0].price_change) > 0 : null;
-
+  console.log(priceDetails);
   return (
     <div className="h-auto">
       <div className="bg-gradient-to-br from-indigo-100 to-purple-100 p-8 rounded-3xl mx-auto mt-8 shadow-2xl max-w-4xl h-auto">

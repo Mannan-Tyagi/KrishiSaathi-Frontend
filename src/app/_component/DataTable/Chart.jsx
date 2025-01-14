@@ -17,7 +17,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
-import { getMarketId } from "./marketutils";
+import { getMarketId } from "../marketutils";
+import { BASE_BACKEND_URL } from "../../utils";
 
 const chartConfig = {
   modal: {
@@ -44,7 +45,7 @@ export function Chart({ commodityId }) {
       setError(null);
       try {
         const response = await fetch(
-          "https://xnv320z0-8000.inc1.devtunnels.ms/api/get-commodity-forecast/",
+          `${BASE_BACKEND_URL}/api/get-commodity-forecast/`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
