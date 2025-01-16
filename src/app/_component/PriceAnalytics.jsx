@@ -219,9 +219,9 @@ function PriceAnalytics({ selectedCommodity, selectedMarketId }) {
   const maxPrice = priceData.length > 0 ? Math.max(...priceData.map(item => item.price)) : 0
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
-      <main className="max-w-7xl py-8">
-        <div className="mb-8 bg-white rounded-xl shadow-sm p-6 border border-emerald-100 hover:shadow-lg transition-all duration-200">
+    <div className="bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
+      <main className="max-w-7xl">
+        <div className="bg-white rounded-xl shadow-sm p-6 border border-emerald-100 hover:shadow-lg transition-all duration-200">
           {/* Header Section */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">

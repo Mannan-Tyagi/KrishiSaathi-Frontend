@@ -229,23 +229,26 @@ const handleCommoditySelect = async (commodity, marketId) => {
         </div>
 
         {/* Weather Impact */}
-        <div className="mb-6">
-          <WeatherImpactCard lastUpdated={lastUpdated} />
-        </div>
 
         {/* Forecast Section */}
         <div>
+        <PriceAnalytics 
+  selectedCommodity={selectedCommodity}
+  selectedMarketId={selectedMarketId}
+/>       
+        
         <ForecastCard 
     data={forecastData}
     isLoading={isLoadingForecast}
     error={forecastError}
     selectedCommodity={selectedCommodity}
   />
-        <PriceAnalytics 
-  selectedCommodity={selectedCommodity}
-  selectedMarketId={selectedMarketId}
-/>
+        
         </div>
+        
+        <div className="mb-6">
+           <WeatherImpactCard lastUpdated={lastUpdated} /> 
+        </div> 
       </main>
     </div>
   );
