@@ -95,9 +95,9 @@ export const CommodityCard = ({ data }) => {
             </div>
           </div>
 
-          <button className="p-2.5 rounded-lg hover:bg-gray-100 transition-colors group/share">
+          {/* <button className="p-2.5 rounded-lg hover:bg-gray-100 transition-colors group/share">
             <Share2 className="w-5 h-5 text-gray-500 group-hover/share:text-gray-700" />
-          </button>
+          </button> */}
         </div>
 
         {/* Price Section */}

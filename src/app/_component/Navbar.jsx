@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Sprout, Menu, ChevronDown } from 'lucide-react';
-import { setCommodityId, setMarketId, setMarketName } from "../utils";
+import { BASE_BACKEND_URL, setCommodityId, setMarketId, setMarketName } from "../utils";
 
 function Navbar({ onCommoditySelect }) {
   // Track location selections
+
   const [selectedState, setSelectedState] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [selectedMarket, setSelectedMarket] = useState('');
@@ -32,7 +33,7 @@ function Navbar({ onCommoditySelect }) {
   useEffect(() => {
     const fetchStates = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/get-market-states/');
+        const response = await fetch(`${BASE_BACKEND_URL}/api/get-market-states/`);
         if (!response.ok) {
           throw new Error(`Failed to fetch states. Status: ${response.status}`);
         }
@@ -56,7 +57,7 @@ function Navbar({ onCommoditySelect }) {
         return;
       }
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/get-market-districts/', {
+        const response = await fetch(`${BASE_BACKEND_URL}/api/get-market-districts/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ market_state: selectedState }),
@@ -85,7 +86,7 @@ function Navbar({ onCommoditySelect }) {
         return;
       }
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/get-markets/', {
+        const response = await fetch(`${BASE_BACKEND_URL}/api/get-markets/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ market_district: selectedDistrict }),
@@ -119,7 +120,7 @@ function Navbar({ onCommoditySelect }) {
     }
     const fetchCommodities = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/get-commodity/', {
+        const response = await fetch(`${BASE_BACKEND_URL}/api/get-commodity/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ market_id: String(marketObj.market_id) }),

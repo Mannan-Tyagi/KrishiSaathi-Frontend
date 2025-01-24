@@ -106,12 +106,12 @@ export const TopMarketsCard = ({ data = [], isLoading, error, selectedCommodity 
             value={timeRange} 
             onChange={handleTimeRangeChange}
           />
-          <button 
+          {/* <button 
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors group"
             title="Download data"
           >
             <Download className="w-4 h-4 text-gray-500 group-hover:text-gray-700" />
-          </button>
+          </button> */}
         </div>
       </div>
 
