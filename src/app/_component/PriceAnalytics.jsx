@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react"
-import { Activity, ArrowUpRight, ArrowDownRight } from "lucide-react"
+import { Activity, ArrowUpRight, ArrowDownRight, Menu } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import {
   CartesianGrid,
@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis
 } from "recharts"
+import { BASE_BACKEND_URL } from "../utils"
 
 function PriceAnalytics({ selectedCommodity, selectedMarketId }) {
   const [selectedTimeframe, setSelectedTimeframe] = useState("6M")
@@ -19,6 +20,7 @@ function PriceAnalytics({ selectedCommodity, selectedMarketId }) {
   const [seasonalData, setSeasonalData] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const fetchPriceData = async () => {
     if (!selectedCommodity?.commodity_id || !selectedMarketId) return
@@ -28,7 +30,7 @@ function PriceAnalytics({ selectedCommodity, selectedMarketId }) {
       setError(null)
 
       const [priceResponse, seasonalResponse] = await Promise.all([
-        fetch('http://127.0.0.1:8000/api/commodity_prices/', {
+        fetch(`${BASE_BACKEND_URL}/api/commodity_prices/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -39,7 +41,7 @@ function PriceAnalytics({ selectedCommodity, selectedMarketId }) {
             commodity_id: selectedCommodity.commodity_id
           })
         }),
-        fetch('http://127.0.0.1:8000/api/seasonal-data/', {
+        fetch(`${BASE_BACKEND_URL}/api/seasonal-data/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -223,7 +225,53 @@ function PriceAnalytics({ selectedCommodity, selectedMarketId }) {
       <main className="max-w-7xl">
         <div className="bg-white rounded-xl shadow-sm p-6 border border-emerald-100 hover:shadow-lg transition-all duration-200">
           {/* Header Section */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6 sm:hidden">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+                <Activity className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-800">
+                  {selectedCommodity.commodity_name}
+                </h2>
+                <p className="text-xs text-gray-500">Real-time market insights</p>
+              </div>
+            </div>
+            
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 bg-gray-100 rounded-lg"
+            >
+              <Menu className="w-5 h-5 text-gray-600" />
+            </button>
+          </div>
+
+          {/* Mobile Timeframe Selector */}
+          {isMobileMenuOpen && (
+            <div className="sm:hidden mb-4">
+              <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1 overflow-x-auto">
+                {['1M', '3M', '6M', '1Y'].map(timeframe => (
+                  <button
+                    key={timeframe}
+                    onClick={() => {
+                      setSelectedTimeframe(timeframe)
+                      setIsMobileMenuOpen(false)
+                    }}
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex-shrink-0 ${
+                      selectedTimeframe === timeframe
+                        ? 'bg-white text-indigo-600 shadow-sm'
+                        : 'text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {timeframe}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Desktop Header */}
+          <div className="hidden sm:flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-200">
                 <Activity className="w-6 h-6 text-white" />
@@ -255,9 +303,10 @@ function PriceAnalytics({ selectedCommodity, selectedMarketId }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-12 gap-6">
+          {/* Responsive Grid Layout */}
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 sm:gap-6">
             {/* Price Volatility Card */}
-            <div className="col-span-3 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
+            <div className="sm:col-span-12 md:col-span-4 lg:col-span-3 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-medium text-gray-600">
                   Price Volatility Index
@@ -320,8 +369,9 @@ function PriceAnalytics({ selectedCommodity, selectedMarketId }) {
               </div>
             </div>
 
-            {/* Price Trend Chart */}
-            <div className="col-span-5 bg-white rounded-xl p-4 border border-gray-200">
+                {/* Price Trend Chart */}
+                <div className="sm:col-span-12 md:col-span-8 lg:col-span-5 bg-white rounded-xl p-4 border border-gray-200">
+
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-medium text-gray-600">Price Trend</h3>
                 <div className="flex items-center gap-2 text-xs text-gray-500">
@@ -453,7 +503,8 @@ function PriceAnalytics({ selectedCommodity, selectedMarketId }) {
             </div>
 
             {/* Seasonal Patterns */}
-            <div className="col-span-4 bg-white rounded-xl p-4 border border-gray-200 hover:shadow-lg transition-all duration-200">
+            <div className="sm:col-span-12 lg:col-span-4 bg-white rounded-xl p-4 border border-gray-200 hover:shadow-lg transition-all duration-200">
+              {/* Seasonal Patterns Content with Responsive Adjustments */}
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-medium text-gray-600">
                   Seasonal Price Trends
@@ -466,17 +517,22 @@ function PriceAnalytics({ selectedCommodity, selectedMarketId }) {
                 </div>
               </div>
 
-              <div className="h-64 relative">
+              <div className="h-48 sm:h-64 relative">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={processSeasonalData()}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="season" tick={{ fontSize: 12 }} />
+                    <XAxis 
+                      dataKey="season" 
+                      tick={{ fontSize: 10 }} 
+                      interval="preserveStartEnd"
+                    />
                     <YAxis
-                      tick={{ fontSize: 12 }}
+                      tick={{ fontSize: 10 }}
                       tickFormatter={value => `₹${(value / 1000).toFixed(1)}K`}
+                      width={40}
                     />
                     <Tooltip
                       formatter={value => [`₹${value.toLocaleString()}`, 'Price']}
@@ -488,8 +544,11 @@ function PriceAnalytics({ selectedCommodity, selectedMarketId }) {
                         padding: '8px'
                       }}
                     />
-                    <Legend wrapperStyle={{ fontSize: 12 }} />
-
+                    <Legend 
+                      wrapperStyle={{ fontSize: 10 }} 
+                      layout="horizontal" 
+                      verticalAlign="bottom"
+                    />
                     {/* Gradients for each year's line */}
                     <defs>
                       <linearGradient
@@ -575,8 +634,7 @@ function PriceAnalytics({ selectedCommodity, selectedMarketId }) {
               </div>
             </div>
 
-            {/* Price Movement Indicators */}
-            <div className="col-span-12 grid grid-cols-3 gap-4 mt-6">
+            <div className="sm:col-span-12 grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 sm:mt-6">
               {[
                 {
                   title: `${selectedTimeframe} Change`,
@@ -601,15 +659,15 @@ function PriceAnalytics({ selectedCommodity, selectedMarketId }) {
                   key={index}
                   className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:bg-gray-100 transition-colors duration-200"
                 >
-                  <h4 className="text-sm text-gray-500 mb-2">
+                  <h4 className="text-xs sm:text-sm text-gray-500 mb-2">
                     {indicator.title}
                   </h4>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-lg font-bold text-gray-900">
+                    <span className="text-base sm:text-lg font-bold text-gray-900">
                       {indicator.value}
                     </span>
                     <span
-                      className={`text-sm font-medium ${
+                      className={`text-xs sm:text-sm font-medium ${
                         indicator.trend === 'up'
                           ? 'text-emerald-600'
                           : 'text-red-500'
@@ -626,9 +684,9 @@ function PriceAnalytics({ selectedCommodity, selectedMarketId }) {
                     }`}
                   >
                     {indicator.trend === 'up' ? (
-                      <ArrowUpRight className="w-4 h-4" />
+                      <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4" />
                     ) : (
-                      <ArrowDownRight className="w-4 h-4" />
+                      <ArrowDownRight className="w-3 h-3 sm:w-4 sm:h-4" />
                     )}
                     <span className="text-xs font-medium">vs previous period</span>
                   </div>
