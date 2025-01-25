@@ -1,6 +1,7 @@
 import React from 'react';
 import { Clock, Truck, Share2, ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { formatDistanceToNow, parse } from 'date-fns';
+import Image from 'next/image';
 
 const PriceTag = ({ value, percentage, isPositive }) => {
   const Icon = isPositive ? ArrowUpRight : ArrowDownRight;
@@ -68,10 +69,12 @@ export const CommodityCard = ({ data }) => {
             <div className="flex items-center gap-4">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl blur-lg opacity-20"></div>
-                <img
+                <Image
                   src={getCommodityImage(commodity_name)}
                   alt={commodity_name}
                   className="relative w-14 h-14 rounded-xl object-cover shadow-md border-2 border-white"
+                  width={56} // Corresponding to `w-14` in Tailwind (14 * 4px)
+                  height={56} 
                 />
               </div>
               <div>
