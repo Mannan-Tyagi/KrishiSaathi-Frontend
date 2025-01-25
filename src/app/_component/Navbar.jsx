@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Sprout, Menu, ChevronDown } from 'lucide-react';
 import { BASE_BACKEND_URL, setCommodityId, setMarketId, setMarketName } from "../utils";
+import Image from 'next/image';
 
 function Navbar({ onCommoditySelect }) {
   // Track location selections
@@ -205,10 +206,12 @@ function Navbar({ onCommoditySelect }) {
                           setShowSearch(false);
                         }}
                       >
-                        <img
+                        <Image
                           src={getCommodityImage(commodity.commodity_name)}
                           alt={commodity.commodity_name}
                           className="w-12 h-12 rounded-lg object-cover"
+                          width={48}
+                          height={48}
                         />
                         <div className="ml-3 flex-1">
                           <div className="text-gray-700 font-medium">
@@ -287,10 +290,12 @@ function Navbar({ onCommoditySelect }) {
                         setShowSearch(false);
                       }}
                     >
-                      <img
+                      <Image
                         src={getCommodityImage(commodity.commodity_name)}
                         alt={commodity.commodity_name}
                         className="w-12 h-12 rounded-lg object-cover"
+                        width={48}
+                        height={48}
                       />
                       <div className="ml-3 flex-1">
                         <div className="text-gray-700 font-medium">

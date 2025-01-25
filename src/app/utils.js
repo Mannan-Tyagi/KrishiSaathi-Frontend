@@ -1,10 +1,12 @@
 // utils.js
 
 // Define the base backend link
-const BASE_BACKEND_URL = "http://127.0.0.1:8000";
-// const BASE_BACKEND_URL = "https://xnv320z0-8000.inc1.devtunnels.ms";
+
+// utils.js
 
 
+const BASE_BACKEND_URL = process.env.NEXT_PUBLIC_BASE_BACKEND_URL_PROD;
+console.log("Backend URL:", BASE_BACKEND_URL); // Should print the URL from .env.local
 // Export the constant
 export { BASE_BACKEND_URL };
 
