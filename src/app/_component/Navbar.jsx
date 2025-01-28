@@ -149,9 +149,8 @@ function Navbar({ onCommoditySelect }) {
   // Simple helper to load images from public/<commodity_name>.jpg
   // Adjust or sanitize commodity names as needed for actual file naming
   const getCommodityImage = (commodityName) => {
-    // Only sanitize if there are spaces (replace spaces with underscores)
-    const sanitized = commodityName.replace(/\s+/g, '_');
-    return `/${sanitized}.jpeg`;
+    // Simply return the commodity name with the extension
+    return `/${commodityName}.jpeg`;
   };
   
   return (
