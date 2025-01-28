@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Download, MapPin, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { TrendingUp, MapPin, ArrowUpRight, ArrowDownRight, Menu } from 'lucide-react';
 
-const TimeRangeSelect = ({ value, onChange }) => (
+const TimeRangeSelect = ({ value, onChange, isMobile }) => (
   <select 
     value={value}
     onChange={(e) => onChange(e.target.value)}
-    className="text-sm border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-gray-50/80 backdrop-blur-sm px-3 py-2 hover:bg-gray-100 transition-colors"
+    className={`text-xs sm:text-sm border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-gray-50/80 backdrop-blur-sm px-2 py-1.5 sm:px-3 sm:py-2 hover:bg-gray-100 transition-colors ${
+      isMobile ? 'w-full mb-2' : ''
+    }`}
   >
     <option value="24h">Last 24 hours</option>
     <option value="7d">Last 7 days</option>
@@ -14,12 +16,10 @@ const TimeRangeSelect = ({ value, onChange }) => (
 );
 
 const MarketItem = ({ item }) => {
-  // Safely parse prices
   const modalPrice = parseFloat(item.modal_price) || 0;
   const minPrice = parseFloat(item.min_price) || 0;
   const maxPrice = parseFloat(item.max_price) || 0;
 
-  // Calculate price change percentage only if we have valid numbers
   const priceRange = minPrice > 0 ? 
     ((maxPrice - minPrice) / minPrice * 100).toFixed(1) : 
     0;
@@ -28,7 +28,7 @@ const MarketItem = ({ item }) => {
   const Icon = isPositive ? ArrowUpRight : ArrowDownRight;
 
   return (
-    <div className="group flex items-center justify-between p-4 rounded-lg hover:bg-gray-50/90 transition-all duration-200 border border-gray-100 hover:border-blue-100 hover:shadow-sm">
+    <div className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg hover:bg-gray-50/90 transition-all duration-200 border border-gray-100 hover:border-blue-100 hover:shadow-sm gap-4">
       <div className="flex items-center gap-3">
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg blur opacity-40 group-hover:opacity-60 transition-opacity"></div>
@@ -45,11 +45,11 @@ const MarketItem = ({ item }) => {
           </p>
         </div>
       </div>
-      <div className="text-right">
+      <div className="text-left sm:text-right">
         <p className="text-lg font-semibold text-gray-900">
           ₹{modalPrice.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
         </p>
-        <div className="flex items-center justify-end gap-1">
+        <div className="flex items-center sm:justify-end gap-1">
           <Icon className={`w-4 h-4 ${isPositive ? 'text-emerald-600' : 'text-red-500'}`} />
           <p className={`text-sm font-medium ${isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
             Range: {priceRange}%
@@ -66,29 +66,61 @@ const MarketItem = ({ item }) => {
 export const TopMarketsCard = ({ data = [], isLoading, error, selectedCommodity }) => {
   const [timeRange, setTimeRange] = useState('24h');
   const [localData, setLocalData] = useState(data);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    console.log('TopMarketsCard data updated:', data);
     setLocalData(data);
   }, [data]);
 
   const handleTimeRangeChange = (newRange) => {
     setTimeRange(newRange);
-    console.log('Time range changed to:', newRange);
+  };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
   if (!selectedCommodity?.commodity_id) {
     return (
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-emerald-100 flex items-center justify-center h-64">
+      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-emerald-100 flex items-center justify-center h-64">
         <p className="text-gray-500">Select a commodity to view top markets</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6 border border-emerald-100 hover:shadow-lg transition-all duration-200">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-emerald-100 hover:shadow-lg transition-all duration-200">
+      {/* Mobile Header with Menu Toggle */}
+      <div className="sm:hidden flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+            <TrendingUp className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-gray-800">Top Markets</h2>
+          </div>
+        </div>
+        <button 
+          onClick={toggleMobileMenu}
+          className="p-2 bg-gray-100 rounded-lg"
+        >
+          <Menu className="w-5 h-5 text-gray-600" />
+        </button>
+      </div>
+
+      {/* Mobile Menu Dropdown */}
+      {isMobileMenuOpen && (
+        <div className="sm:hidden mb-4">
+          <TimeRangeSelect 
+            value={timeRange} 
+            onChange={handleTimeRangeChange}
+            isMobile={true}
+          />
+        </div>
+      )}
+
+      {/* Desktop Header */}
+      <div className="hidden sm:flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="relative">
             <div className="absolute inset-0 bg-blue-500 rounded-lg blur opacity-20"></div>
@@ -96,7 +128,7 @@ export const TopMarketsCard = ({ data = [], isLoading, error, selectedCommodity 
               <TrendingUp className="w-5 h-5 text-blue-600" />
             </div>
           </div>
-          <h2 className="text-lg font-bold text-gray-800">
+          <h2 className="text-lg font-bold text-gray-800 break-words">
             Top Markets - {selectedCommodity?.commodity_name || 'Loading...'}
           </h2>
         </div>
@@ -106,12 +138,6 @@ export const TopMarketsCard = ({ data = [], isLoading, error, selectedCommodity 
             value={timeRange} 
             onChange={handleTimeRangeChange}
           />
-          {/* <button 
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors group"
-            title="Download data"
-          >
-            <Download className="w-4 h-4 text-gray-500 group-hover:text-gray-700" />
-          </button> */}
         </div>
       </div>
 
