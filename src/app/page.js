@@ -27,7 +27,7 @@ function App() {
     setCommodityError(null);
     
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/get-price-details/", {
+      const response = await fetch(`${BASE_BACKEND_URL}/api/get-price-details/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -62,7 +62,7 @@ function App() {
     
     try {
       console.log('Fetching top markets for commodity:', commodity);
-      const response = await fetch("http://127.0.0.1:8000/api/get-top6-market-prices/", {
+      const response = await fetch(`${BASE_BACKEND_URL}/api/get-top6-market-prices/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -103,7 +103,7 @@ const fetchForecastData = async (commodity, marketId) => {
 
   try {
     console.log('Fetching forecast data:', { commodity_id: commodity.commodity_id, market_id: marketId });
-    const response = await fetch("http://127.0.0.1:8000/api/get-top6-forecast-price/", {
+    const response = await fetch(`${BASE_BACKEND_URL}/api/get-top6-forecast-price/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
