@@ -56,8 +56,8 @@ export const CommodityCard = ({ data }) => {
   const priceRange = (((parseFloat(max_price) - parseFloat(min_price)) / parseFloat(min_price)) * 100).toFixed(2);
   
   const getCommodityImage = (commodityName) => {
-    const sanitized = commodityName.replace(/\s+/g, '_');
-    return `/${sanitized}.jpeg`;
+    // Simply return the commodity name with the extension
+    return `/${commodityName}.jpeg`;
   };
   
   return (
