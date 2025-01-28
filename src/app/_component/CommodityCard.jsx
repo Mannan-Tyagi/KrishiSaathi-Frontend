@@ -56,9 +56,9 @@ export const CommodityCard = ({ data }) => {
   const priceRange = (((parseFloat(max_price) - parseFloat(min_price)) / parseFloat(min_price)) * 100).toFixed(2);
   
   const getCommodityImage = (commodityName) => {
-    const sanitized = commodityName.replace(/\s+/g, '_');
+    const sanitized = encodeURIComponent(commodityName.replace(/\s+/g, '_'));
     return `/${sanitized}.jpeg`;
-  };
+  };  
   
   return (
     <div className="group relative bg-white rounded-xl shadow-sm p-6 border border-emerald-100 hover:shadow-lg transition-all duration-200 overflow-hidden">
