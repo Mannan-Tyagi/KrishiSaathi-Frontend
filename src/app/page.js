@@ -8,7 +8,7 @@ import { CommodityCard } from "./_component/CommodityCard";
 import { TopMarketsCard } from "./_component/TopMarketsCard";
 import { WeatherImpactCard } from "./_component/WeatherImpactCard";
 import ForecastCard from "./_component/ForecastCard";
-import { getCommodityId } from "./utils";
+import { BASE_BACKEND_URL, getCommodityId } from "./utils";
 import PriceAnalytics from "./_component/PriceAnalytics";
 
 function App() {
