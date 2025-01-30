@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { Filter, RefreshCcw } from "lucide-react";
-import Navbar from "./_component/Navbar";
 import { StatsGrid } from "./_component/StatsGrid";
 import { CommodityCard } from "./_component/CommodityCard";
 import { TopMarketsCard } from "./_component/TopMarketsCard";
@@ -10,6 +9,8 @@ import { WeatherImpactCard } from "./_component/WeatherImpactCard";
 import ForecastCard from "./_component/ForecastCard";
 import { BASE_BACKEND_URL, getCommodityId } from "./utils";
 import PriceAnalytics from "./_component/PriceAnalytics";
+// import Navbar from "./_component/Navbar";
+import Navbar from "./_component/navbar/Navbar";
 
 function App() {
   const [selectedCommodity, setSelectedCommodity] = useState(null);
@@ -43,8 +44,8 @@ function App() {
       const data = await response.json();
       setCommodityData(data[0]);
     } catch (error) {
-      console.error("Error fetching commodity data:", error);
-      console.log(commodity.id);
+      // console.error("Error fetching commodity data:", error);
+      // console.log(commodity.id);
       setCommodityError(error.message);
     } finally {
       setIsLoadingCommodity(false);
@@ -53,7 +54,7 @@ function App() {
   // Fetch top markets data
   const fetchTopMarketsData = async (commodity) => {
     if (!commodity?.commodity_id) {
-      console.log('No commodity ID provided for fetching top markets');
+      // console.log('No commodity ID provided for fetching top markets');
       return;
     }
   
@@ -61,7 +62,7 @@ function App() {
     setMarketsError(null);
     
     try {
-      console.log('Fetching top markets for commodity:', commodity);
+      // console.log('Fetching top markets for commodity:', commodity);
       const response = await fetch(`${BASE_BACKEND_URL}/api/get-top6-market-prices/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -76,10 +77,10 @@ function App() {
       }
   
       const data = await response.json();
-      console.log('Received top markets data:', data);
+      // console.log('Received top markets data:', data);
       setTopMarketsData(data);
     } catch (error) {
-      console.error("Error fetching market data:", error);
+      // console.error("Error fetching market data:", error);
       setMarketsError(error.message);
     } finally {
       setIsLoadingMarkets(false);
@@ -94,7 +95,7 @@ const [forecastError, setForecastError] = useState(null);
 // Add this new function to fetch forecast data
 const fetchForecastData = async (commodity, marketId) => {
   if (!commodity?.commodity_id || !marketId) {
-    console.log('Missing required data for forecast fetch');
+    // console.log('Missing required data for forecast fetch');
     return;
   }
 
@@ -102,7 +103,7 @@ const fetchForecastData = async (commodity, marketId) => {
   setForecastError(null);
 
   try {
-    console.log('Fetching forecast data:', { commodity_id: commodity.commodity_id, market_id: marketId });
+    // console.log('Fetching forecast data:', { commodity_id: commodity.commodity_id, market_id: marketId });
     const response = await fetch(`${BASE_BACKEND_URL}/api/get-top6-forecast-price/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -118,10 +119,10 @@ const fetchForecastData = async (commodity, marketId) => {
     }
 
     const data = await response.json();
-    console.log('Received forecast data:', data);
+    // console.log('Received forecast data:', data);
     setForecastData(data);
   } catch (error) {
-    console.error("Error fetching forecast data:", error);
+    // console.error("Error fetching forecast data:", error);
     setForecastError(error.message);
   } finally {
     setIsLoadingForecast(false);
@@ -130,7 +131,7 @@ const fetchForecastData = async (commodity, marketId) => {
 
 // Update the handleCommoditySelect function to include forecast data
 const handleCommoditySelect = async (commodity, marketId) => {
-  console.log("Selected Commodity:", commodity);
+  // console.log("Selected Commodity:", commodity);
   setSelectedCommodity(commodity);
   setSelectedMarketId(marketId);
   setLastUpdated(new Date());
@@ -148,7 +149,7 @@ const handleCommoditySelect = async (commodity, marketId) => {
       fetchForecastData(commodity, marketId)
     ]);
   } catch (error) {
-    console.error("Error fetching data:", error);
+    // console.error("Error fetching data:", error);
   }
 };
 

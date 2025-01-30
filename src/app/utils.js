@@ -6,7 +6,7 @@
 
 
 const BASE_BACKEND_URL = process.env.NEXT_PUBLIC_BASE_BACKEND_URL_PROD;
-console.log("Backend URL:", BASE_BACKEND_URL); // Should print the URL from .env.local
+// console.log("Backend URL:", BASE_BACKEND_URL); // Should print the URL from .env.local
 // Export the constant
 export { BASE_BACKEND_URL };
 
