@@ -18,7 +18,6 @@ const useLocationData = (selectedState, selectedDistrict) => {
       try {
         const response = await fetch(`${BASE_BACKEND_URL}/api/get-market-states/`);
         const data = await response.json();
-        console.log('States response data:', data); // ← Check here
         setStatesList(data);
       } catch (error) {
         console.error('Error fetching states:', error);
@@ -41,7 +40,6 @@ const useLocationData = (selectedState, selectedDistrict) => {
           body: JSON.stringify({ market_state: selectedState }),
         });
         const data = await response.json();
-        console.log('Districts response data:', data); // ← Check here
         setDistrictsList(data);
       } catch (error) {
         console.error('Error fetching districts:', error);
@@ -64,7 +62,6 @@ const useLocationData = (selectedState, selectedDistrict) => {
           body: JSON.stringify({ market_district: selectedDistrict }),
         });
         const data = await response.json();
-        console.log('Markets response data:', data); // ← Check here
         setMarketsList(data);
       } catch (error) {
         console.error('Error fetching markets:', error);
@@ -87,22 +84,23 @@ const Navbar = ({ onCommoditySelect }) => {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [commoditiesList, setCommoditiesList] = useState([]);
 
+  // New states for storing user coordinates
+  const [userLat, setUserLat] = useState(null);
+  const [userLong, setUserLong] = useState(null);
+
+  // Custom hook for location data
   const { statesList, districtsList, marketsList } = useLocationData(selectedState, selectedDistrict);
 
-  // In your Navbar component
-const districtOptions = useMemo(() => 
-  districtsList
-    .map(dist => dist?.market_district)
-    .filter(Boolean), // Remove any undefined/null values
-  [districtsList]
-);
+  // Generate dropdown options
+  const districtOptions = useMemo(
+    () => districtsList.map(dist => dist?.market_district).filter(Boolean),
+    [districtsList]
+  );
 
-const marketOptions = useMemo(() => 
-  marketsList
-    .map(mkt => mkt?.market_name)
-    .filter(Boolean), // Remove any undefined/null values
-  [marketsList]
-);
+  const marketOptions = useMemo(
+    () => marketsList.map(mkt => mkt?.market_name).filter(Boolean),
+    [marketsList]
+  );
 
   // Fetch commodities when market is selected
   useEffect(() => {
@@ -111,7 +109,7 @@ const marketOptions = useMemo(() =>
       setCommoditiesList([]);
       return;
     }
-    
+
     const fetchCommodities = async () => {
       try {
         const response = await fetch(`${BASE_BACKEND_URL}/api/get-commodity/`, {
@@ -132,13 +130,58 @@ const marketOptions = useMemo(() =>
 
   // Filter commodities based on search
   const filteredCommodities = useMemo(
-    () => commoditiesList.filter(commodity =>
-      commodity.commodity_name?.toLowerCase().includes(searchQuery.toLowerCase())
-    ),
+    () =>
+      commoditiesList.filter(commodity =>
+        commodity.commodity_name?.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
     [commoditiesList, searchQuery]
   );
 
+  // Helper function to get commodity images
   const getCommodityImage = (commodityName) => `/${commodityName}.jpeg`;
+
+  // ▼▼▼ Here is the main logic for getting user location and selecting the nearest market ▼▼▼
+  useEffect(() => {
+    // Attempt to get user coordinates via browser's Geolocation API
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const lat = position.coords.latitude;
+          const long = position.coords.longitude;
+          setUserLat(lat);
+          setUserLong(long);
+
+          // Now call your nearest-market endpoint with these coordinates
+          try {
+            const response = await fetch(`${BASE_BACKEND_URL}/api/nearest-market/`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                user_lat: String(lat),
+                user_long: String(long),
+              }),
+            });
+            const data = await response.json();
+
+            // If the API returns a list, assume the first item is the nearest
+            if (Array.isArray(data) && data.length > 0) {
+              const nearest = data[0];
+              setSelectedState(nearest.market_state);
+              setSelectedDistrict(nearest.market_district);
+              setSelectedMarket(nearest.market_name);
+            }
+          } catch (error) {
+            console.error('Error fetching nearest market:', error);
+          }
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          // Fallback handling if user blocks or location fails
+        }
+      );
+    }
+  }, []);
+  // ▲▲▲ End of main logic for nearest market selection based on user lat/long ▲▲▲
 
   return (
     <>
@@ -205,34 +248,33 @@ const marketOptions = useMemo(() =>
       </nav>
 
       <MobileMenu
-  isOpen={isMobileMenuOpen}
-  searchQuery={searchQuery}
-  showSearch={showSearch}             // Add this line
-  setSearchQuery={setSearchQuery}
-  setShowSearch={setShowSearch}
-  filteredCommodities={filteredCommodities}
-  onCommoditySelect={onCommoditySelect}
-  getCommodityImage={getCommodityImage}
-  setShowLocationModal={setShowLocationModal}
-  selectedMarket={selectedMarket}
-  selectedDistrict={selectedDistrict}
-  marketId={marketId}
-/>
+        isOpen={isMobileMenuOpen}
+        searchQuery={searchQuery}
+        showSearch={showSearch}
+        setSearchQuery={setSearchQuery}
+        setShowSearch={setShowSearch}
+        filteredCommodities={filteredCommodities}
+        onCommoditySelect={onCommoditySelect}
+        getCommodityImage={getCommodityImage}
+        setShowLocationModal={setShowLocationModal}
+        selectedMarket={selectedMarket}
+        selectedDistrict={selectedDistrict}
+        marketId={marketId}
+      />
 
-<LocationModal
-  showLocationModal={showLocationModal}
-  setShowLocationModal={setShowLocationModal}
-  // Map statesList into strings here and pass the final array
-  statesList={statesList.map(st => st.market_state)}
-  districtOptions={districtOptions}
-  marketOptions={marketOptions}
-  selectedState={selectedState}
-  selectedDistrict={selectedDistrict}
-  selectedMarket={selectedMarket}
-  setSelectedState={setSelectedState}
-  setSelectedDistrict={setSelectedDistrict}
-  setSelectedMarket={setSelectedMarket}
-/>
+      <LocationModal
+        showLocationModal={showLocationModal}
+        setShowLocationModal={setShowLocationModal}
+        statesList={statesList.map(st => st.market_state)}
+        districtOptions={districtOptions}
+        marketOptions={marketOptions}
+        selectedState={selectedState}
+        selectedDistrict={selectedDistrict}
+        selectedMarket={selectedMarket}
+        setSelectedState={setSelectedState}
+        setSelectedDistrict={setSelectedDistrict}
+        setSelectedMarket={setSelectedMarket}
+      />
     </>
   );
 };
