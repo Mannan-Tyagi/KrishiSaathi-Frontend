@@ -1,11 +1,31 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, MapPin, Menu, ChevronDown } from 'lucide-react';
+import { Search, MapPin, Menu, ChevronDown, AlertTriangle, X } from 'lucide-react';
 import { BASE_BACKEND_URL } from '@/app/utils';
 import { Logo } from './components/Logo';
 import { SearchResults } from './components/SearchResults';
 import { MobileMenu } from './components/MobileMenu';
 import { LocationModal } from './components/LocationModal';
 import SearchableDropdown from './components/SearchableDropdown';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
+
+const LocationAlert = ({ message, onClose }) => (
+  <div className="fixed top-20 right-0 z-[100] p-4 animate-slide-in-right">
+    <div className="bg-white border-l-4 border-red-500 shadow-lg rounded-lg p-4 max-w-md flex items-start gap-3">
+      <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+      <div className="flex-1">
+        <h3 className="font-medium text-gray-900 mb-1">Location Error</h3>
+        <p className="text-gray-600 text-sm">{message}</p>
+      </div>
+      <button 
+        onClick={onClose}
+        className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+      >
+        <X className="h-5 w-5" />
+      </button>
+    </div>
+  </div>
+);
 
 const useLocationData = (selectedState, selectedDistrict) => {
   const [statesList, setStatesList] = useState([]);
@@ -87,7 +107,17 @@ const Navbar = ({ onCommoditySelect }) => {
   // New states for storing user coordinates
   const [userLat, setUserLat] = useState(null);
   const [userLong, setUserLong] = useState(null);
-
+  const [locationError, setLocationError] = useState(null);
+  const [showLocationAlert, setShowLocationAlert] = useState(false);
+  useEffect(() => {
+    let timer;
+    if (showLocationAlert) {
+      timer = setTimeout(() => {
+        setShowLocationAlert(false);
+      }, 5000);
+    }
+    return () => clearTimeout(timer);
+  }, [showLocationAlert]);
   // Custom hook for location data
   const { statesList, districtsList, marketsList } = useLocationData(selectedState, selectedDistrict);
 
@@ -142,49 +172,80 @@ const Navbar = ({ onCommoditySelect }) => {
 
   // ▼▼▼ Here is the main logic for getting user location and selecting the nearest market ▼▼▼
   useEffect(() => {
-    // Attempt to get user coordinates via browser's Geolocation API
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const lat = position.coords.latitude;
-          const long = position.coords.longitude;
-          setUserLat(lat);
-          setUserLong(long);
+    const handleLocation = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const lat = position.coords.latitude;
+            const long = position.coords.longitude;
+            setUserLat(lat);
+            setUserLong(long);
 
-          // Now call your nearest-market endpoint with these coordinates
-          try {
-            const response = await fetch(`${BASE_BACKEND_URL}/api/nearest-market/`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                user_lat: String(lat),
-                user_long: String(long),
-              }),
-            });
-            const data = await response.json();
+            try {
+              const response = await fetch(`${BASE_BACKEND_URL}/api/nearest-market/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  user_lat: String(lat),
+                  user_long: String(long),
+                }),
+              });
+              const data = await response.json();
 
-            // If the API returns a list, assume the first item is the nearest
-            if (Array.isArray(data) && data.length > 0) {
-              const nearest = data[0];
-              setSelectedState(nearest.market_state);
-              setSelectedDistrict(nearest.market_district);
-              setSelectedMarket(nearest.market_name);
+              if (Array.isArray(data) && data.length > 0) {
+                const nearest = data[0];
+                setSelectedState(nearest.market_state);
+                setSelectedDistrict(nearest.market_district);
+                setSelectedMarket(nearest.market_name);
+              }
+            } catch (error) {
+              console.error('Error fetching nearest market:', error);
+              setLocationError('Failed to find nearest market. Please select location manually.');
+              setShowLocationAlert(true);
+              setShowLocationModal(true);
             }
-          } catch (error) {
-            console.error('Error fetching nearest market:', error);
+          },
+          (error) => {
+            console.error('Error getting location:', error);
+            let errorMessage = 'Unable to access your location. ';
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                errorMessage += 'Please enable location access or select location manually.';
+                break;
+              case error.POSITION_UNAVAILABLE:
+                errorMessage += 'Location information unavailable. Please select location manually.';
+                break;
+              case error.TIMEOUT:
+                errorMessage += 'Location request timed out. Please select location manually.';
+                break;
+              default:
+                errorMessage += 'Please select location manually.';
+            }
+            setLocationError(errorMessage);
+            setShowLocationAlert(true);
+            setShowLocationModal(true);
           }
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-          // Fallback handling if user blocks or location fails
-        }
-      );
-    }
+        );
+      } else {
+        setLocationError('Geolocation is not supported by your browser. Please select location manually.');
+        setShowLocationAlert(true);
+        setShowLocationModal(true);
+      }
+    };
+
+    handleLocation();
   }, []);
-  // ▲▲▲ End of main logic for nearest market selection based on user lat/long ▲▲▲
+
+  // Nearest market selection based on user lat/long ▲▲▲
 
   return (
     <>
+    {showLocationAlert && locationError && (
+        <LocationAlert 
+          message={locationError}
+          onClose={() => setShowLocationAlert(false)}
+        />
+      )}
       <nav className="bg-white/80 backdrop-blur-md shadow-sm border-b border-emerald-100 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
