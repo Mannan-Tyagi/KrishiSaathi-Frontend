@@ -82,7 +82,7 @@ export const StatsGrid = () => {
 
         setStatsData(updatedStats);
       } catch (error) {
-        console.error("Failed to fetch stats data:", error);
+        // console.error("Failed to fetch stats data:", error);
       }
     };
 

@@ -75,7 +75,7 @@ function PriceAnalytics({ selectedCommodity, selectedMarketId }) {
       setPriceData(transformedPriceData)
       setSeasonalData(sData)
     } catch (error) {
-      console.error('Error fetching data:', error)
+      // console.error('Error fetching data:', error)
       setError(error.message)
     } finally {
       setLoading(false)
