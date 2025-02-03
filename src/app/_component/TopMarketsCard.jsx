@@ -82,9 +82,10 @@ export const TopMarketsCard = ({ data = [], isLoading, error, selectedCommodity 
 
   if (!selectedCommodity?.commodity_id) {
     return (
-      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-emerald-100 flex items-center justify-center h-64">
-        <p className="text-gray-500">Select a commodity to view top markets</p>
-      </div>
+      // <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-emerald-100 flex items-center justify-center h-64">
+      //   <p className="text-gray-500">Select a commodity to view top markets</p>
+      // </div>
+      <></>
     );
   }
 

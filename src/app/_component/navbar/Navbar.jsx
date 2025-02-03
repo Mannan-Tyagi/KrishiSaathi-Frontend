@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Search, MapPin, Menu, ChevronDown, AlertTriangle, X } from 'lucide-react';
 import { BASE_BACKEND_URL } from '@/app/utils';
 import { Logo } from './components/Logo';
@@ -158,7 +158,38 @@ const Navbar = ({ onCommoditySelect }) => {
     fetchCommodities();
   }, [selectedMarket, marketsList]);
 
-  // Filter commodities based on search
+  useEffect(() => {
+    if (selectedMarket) {
+      setShowSearch(true);
+    }
+  }, [selectedMarket]);
+
+  // **New Effect:** Whenever the commodities list is updated (and a market is selected),
+  // open the dropdown. This covers cases where the dropdown might have been closed.
+  useEffect(() => {
+    if (selectedMarket && commoditiesList.length > 0) {
+      setShowSearch(true);
+    }
+  }, [commoditiesList, selectedMarket]);
+
+  // Reference for the search container to detect outside clicks
+  const searchContainerRef = useRef(null);
+
+  // Close search results if clicking outside of the search container
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+        setShowSearch(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Filtered commodities based on search query; when searchQuery is empty, this returns all commodities.
   const filteredCommodities = useMemo(
     () =>
       commoditiesList.filter(commodity =>
@@ -169,6 +200,7 @@ const Navbar = ({ onCommoditySelect }) => {
 
   // Helper function to get commodity images
   const getCommodityImage = (commodityName) => `/${commodityName}.jpeg`;
+
 
   // ▼▼▼ Here is the main logic for getting user location and selecting the nearest market ▼▼▼
   useEffect(() => {
@@ -251,38 +283,49 @@ const Navbar = ({ onCommoditySelect }) => {
           <div className="flex justify-between items-center h-16">
             <Logo />
 
-            {/* Desktop Search */}
-            <div className="hidden md:flex items-center flex-1 max-w-3xl mx-8 gap-4">
-              <div className="relative flex-1 group">
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-lg blur opacity-25 group-hover:opacity-40 transition duration-200" />
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search commodities..."
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      setShowSearch(true);
-                    }}
-                    onFocus={() => setShowSearch(true)}
-                    className="w-full px-4 py-2.5 rounded-lg border border-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white/80 backdrop-blur-sm"
-                  />
-                  <Search className="absolute right-3 top-3 text-gray-400 w-5 h-5" />
-                </div>
+                  {/* Desktop Search */}
+      <div className="hidden md:flex items-center flex-1 max-w-3xl mx-8 gap-4">
+        <div ref={searchContainerRef} className="relative flex-1 group">
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-lg blur opacity-25 group-hover:opacity-40 transition duration-200" />
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search commodities..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowSearch(true);
+              }}
+              onFocus={() => setShowSearch(true)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && filteredCommodities.length > 0) {
+                  // Select the first commodity when Enter is pressed
+                  const firstCommodity = filteredCommodities[0];
+                  onCommoditySelect?.(firstCommodity, marketId);
+                  setSearchQuery(firstCommodity.commodity_name);
+                  setShowSearch(false);
+                }
+              }}
+              className="w-full px-4 py-2.5 rounded-lg border border-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white/80 backdrop-blur-sm"
+            />
+            <Search className="absolute right-3 top-3 text-gray-400 w-5 h-5" />
+          </div>
 
-                {showSearch && searchQuery && filteredCommodities.length > 0 && (
-                  <SearchResults
-                    results={filteredCommodities}
-                    onSelect={(commodity) => {
-                      onCommoditySelect?.(commodity, marketId);
-                      setSearchQuery(commodity.commodity_name);
-                      setShowSearch(false);
-                    }}
-                    getImage={getCommodityImage}
-                  />
-                )}
-              </div>
-            </div>
+          {/* Show results as long as there are any commodities and showSearch is true */}
+          {showSearch && filteredCommodities.length > 0 && (
+            <SearchResults
+              results={filteredCommodities}
+              onSelect={(commodity) => {
+                onCommoditySelect?.(commodity, marketId);
+                setSearchQuery(commodity.commodity_name);
+                setShowSearch(false);
+              }}
+              getImage={getCommodityImage}
+            />
+          )}
+        </div>
+      </div>
+
 
             {/* Location Section */}
             <div className="flex items-center gap-4">

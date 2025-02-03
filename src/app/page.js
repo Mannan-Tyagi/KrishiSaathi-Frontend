@@ -198,9 +198,10 @@ const handleCommoditySelect = async (commodity, marketId) => {
           {/* Commodity Card Section */}
           <div>
             {isLoadingCommodity && (
-              <div className="flex items-center justify-center h-64 bg-white rounded-xl border border-emerald-100">
-                <div className="text-gray-500">Loading commodity data...</div>
-              </div>
+              // <div className="flex items-center justify-center h-64 bg-white rounded-xl border border-emerald-100">
+              //   <div className="text-gray-500">Loading commodity data...</div>
+              // </div>
+              <></>
             )}
             
             {commodityError && (
@@ -214,9 +215,10 @@ const handleCommoditySelect = async (commodity, marketId) => {
             )}
             
             {!isLoadingCommodity && !commodityError && !commodityData && !selectedCommodity && (
-              <div className="flex items-center justify-center h-64 bg-white rounded-xl border border-emerald-100">
-                <div className="text-gray-500">Select a commodity to view details</div>
-              </div>
+              // <div className="flex items-center justify-center h-64 bg-white rounded-xl border border-emerald-100">
+              //   <div className="text-gray-500">Select a commodity to view details</div>
+              // </div>
+              <></>
             )}
           </div>
 
@@ -248,7 +250,7 @@ const handleCommoditySelect = async (commodity, marketId) => {
         </div>
         
         <div className="mb-6">
-           <WeatherImpactCard lastUpdated={lastUpdated} /> 
+           {/* <WeatherImpactCard lastUpdated={lastUpdated} />  */}
         </div> 
       </main>
     </div>
