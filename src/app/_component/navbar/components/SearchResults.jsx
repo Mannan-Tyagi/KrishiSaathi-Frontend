@@ -1,7 +1,7 @@
 import Image from 'next/image';
 
 export const SearchResults = ({ results, onSelect, getImage }) => (
-  <div className="absolute mt-1 w-full bg-white/90 backdrop-blur-md rounded-lg shadow-lg border border-emerald-100 max-h-96 overflow-y-auto">
+  <div className="z-20 absolute mt-1 w-full bg-white rounded-lg shadow-lg border border-emerald-100 max-h-96 overflow-y-auto">
     {results.map((commodity) => (
       <div
         key={commodity.commodity_id}
