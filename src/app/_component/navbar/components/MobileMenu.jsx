@@ -1,3 +1,4 @@
+import React, { useEffect, useRef } from 'react';
 import { Search, MapPin } from 'lucide-react';
 import { SearchResults } from './SearchResults';
 
@@ -14,11 +15,39 @@ export const MobileMenu = ({
   selectedMarket,
   selectedDistrict,
   marketId
-}) => (
-  isOpen && (
+}) => {
+  // Create a ref for the search container
+  const searchContainerRef = useRef(null);
+
+  // Close search results if clicking outside of the search container
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+        setShowSearch(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [setShowSearch]);
+
+  if (!isOpen) return null;
+
+  return (
     <div className="md:hidden bg-white/90 backdrop-blur-md border-b border-emerald-100">
       <div className="px-4 py-3 space-y-4">
-        <div className="relative">
+      <button
+          onClick={() => setShowLocationModal(true)}
+          className="w-full flex items-center px-4 py-2.5 text-gray-700 bg-emerald-50/50 rounded-lg"
+        >
+          <MapPin className="h-5 w-5 mr-2 text-emerald-600" />
+          <span>
+            {selectedMarket || 'Select Market'}, {selectedDistrict || 'Select District'}
+          </span>
+        </button>
+        <div ref={searchContainerRef} className="relative">
           <input
             type="text"
             placeholder="Search commodities..."
@@ -31,7 +60,8 @@ export const MobileMenu = ({
           />
           <Search className="absolute right-3 top-3 h-5 w-5 text-gray-400" />
 
-          {showSearch && searchQuery && filteredCommodities.length > 0 && (
+          {/* Show results if showSearch is true and there are any commodities */}
+          {showSearch && filteredCommodities.length > 0 && (
             <SearchResults
               results={filteredCommodities}
               onSelect={(commodity) => {
@@ -44,16 +74,8 @@ export const MobileMenu = ({
           )}
         </div>
 
-        <button
-          onClick={() => setShowLocationModal(true)}
-          className="w-full flex items-center px-4 py-2.5 text-gray-700 bg-emerald-50/50 rounded-lg"
-        >
-          <MapPin className="h-5 w-5 mr-2 text-emerald-600" />
-          <span>
-            {selectedMarket || 'Select Market'}, {selectedDistrict || 'Select District'}
-          </span>
-        </button>
+        
       </div>
     </div>
-  )
-);
+  );
+};
