@@ -100,7 +100,7 @@ const Navbar = ({ onCommoditySelect }) => {
   const [marketId, setMarketId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [commoditiesList, setCommoditiesList] = useState([]);
 
